@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlloyDB DBA Mastery Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1f3050;
+    --accent: #00d4aa;
+    --accent2: #3b82f6;
+    --accent3: #f59e0b;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --code-bg: #0d1117;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+  /* LAYOUT */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 280px;
+    min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    overflow-y: auto;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+  .main {
+    margin-left: 280px;
+    flex: 1;
+    padding: 0 0 80px;
+  }
+  /* SIDEBAR */
+  .sidebar-header {
+    padding: 28px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .sidebar-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .nav { padding: 12px 0; flex: 1; }
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 12px 20px 4px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 13px;
+    border-left: 2px solid transparent;
+    transition: all 0.18s;
+  }
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0,212,170,0.05); }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+  /* CONTENT HEADER */
+  .content-hero {
+    background: linear-gradient(135deg, #0b1628 0%, #0f2040 50%, #0b1628 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 56px 60px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .content-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(0,212,170,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .content-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 30%;
+    width: 400px; height: 200px;
+    background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%);
+  }
+  .breadcrumb {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    letter-spacing: 0.05em;
+  }
+  .breadcrumb span { color: var(--accent); }
+  .hero-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 14px;
+    background: linear-gradient(135deg, #e2e8f0 30%, #00d4aa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 560px;
+    font-weight: 300;
+  }
+  .hero-tags { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+  .tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 3px;
+    letter-spacing: 0.06em;
+  }
+  .tag-green { background: rgba(0,212,170,0.12); color: var(--accent); border: 1px solid rgba(0,212,170,0.25); }
+  .tag-blue { background: rgba(59,130,246,0.12); color: var(--accent2); border: 1px solid rgba(59,130,246,0.25); }
+  .tag-amber { background: rgba(245,158,11,0.12); color: var(--accent3); border: 1px solid rgba(245,158,11,0.25); }
+  /* SECTION */
+  .section {
+    display: none;
+    padding: 48px 60px;
+    animation: fadeIn 0.25s ease;
+  }
+  .section.active { display: block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .section-desc { color: var(--muted); margin-bottom: 36px; font-size: 14px; max-width: 700px; }
+  /* CARDS */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .card.green::before { background: var(--accent); }
+  .card.blue::before { background: var(--accent2); }
+  .card.amber::before { background: var(--accent3); }
+  .card.red::before { background: var(--danger); }
+  .card-icon { font-size: 22px; margin-bottom: 10px; }
+  .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--text); }
+  .card-body { color: var(--muted); font-size: 13px; line-height: 1.65; }
+  /* CODE */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 22px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.75;
+    overflow-x: auto;
+    margin: 16px 0;
+    position: relative;
+  }
+  .code-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .kw { color: #c792ea; }
+  .fn { color: #82aaff; }
+  .str { color: #c3e88d; }
+  .cm { color: #546e7a; font-style: italic; }
+  .num { color: #f78c6c; }
+  .op { color: #89ddff; }
+  .tbl { color: #ffcb6b; }
+  /* H-TAGS */
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 36px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2::before { content: ''; display: block; width: 3px; height: 18px; background: var(--accent); border-radius: 2px; }
+  h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #94a3b8;
+    margin: 24px 0 8px;
+  }
+  p { color: #94a3b8; margin-bottom: 12px; line-height: 1.75; }
+  /* TABLE */
+  .data-table { width: 100%; border-collapse: collapse; margin: 16px 0 28px; font-size: 13px; }
+  .data-table th {
+    background: var(--surface2);
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(31,48,80,0.5);
+    color: #94a3b8;
+    vertical-align: top;
+  }
+  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .data-table td:first-child { font-family: 'IBM Plex Mono', monospace; color: var(--accent3); font-size: 12px; }
+  /* CALLOUT */
+  .callout {
+    border-radius: 6px;
+    padding: 16px 18px;
+    margin: 16px 0;
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  .callout-warn { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: #fcd34d; }
+  .callout-info { background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); color: #93c5fd; }
+  .callout-danger { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; }
+  .callout-success { background: rgba(0,212,170,0.08); border: 1px solid rgba(0,212,170,0.2); color: #6ee7d4; }
+  .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  /* STEPS */
+  .steps { counter-reset: step; }
+  .step {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .step-num {
+    counter-increment: step;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .step-num::before { content: counter(step); }
+  .step-content h4 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+  .step-content p { margin: 0; font-size: 13px; }
+  /* METRICS */
+  .metrics { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin: 20px 0; }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    text-align: center;
+  }
+  .metric-val { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; color: var(--accent); }
+  .metric-label { font-size: 11px; color: var(--muted); margin-top: 4px; letter-spacing: 0.05em; }
+  /* BADGE */
+  .badge {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.06em;
+    vertical-align: middle;
+  }
+  .badge-green { background: rgba(0,212,170,0.15); color: var(--accent); }
+  .badge-red { background: rgba(239,68,68,0.15); color: #f87171; }
+  .badge-blue { background: rgba(59,130,246,0.15); color: #93c5fd; }
+  /* UL */
+  ul.styled { padding-left: 0; list-style: none; }
+  ul.styled li { position: relative; padding: 5px 0 5px 20px; color: #94a3b8; font-size: 13px; }
+  ul.styled li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); }
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .sidebar { width: 100%; min-height: auto; position: relative; }
+    .main { margin-left: 0; }
+    .section { padding: 28px 20px; }
+    .content-hero { padding: 36px 20px 28px; }
+    .hero-title { font-size: 26px; }
+  }
+  .divider { height: 1px; background: var(--border); margin: 32px 0; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo"><div class="logo-dot"></div>ALLOYDB</div>
+    <div class="sidebar-title">DBA Mastery<br>Reference</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section-label">Foundations</div>
+    <div class="nav-item active" onclick="show('overview')"><span class="nav-icon">🏗️</span>Architecture Overview</div>
+    <div class="nav-item" onclick="show('setup')"><span class="nav-icon">⚙️</span>Setup & Configuration</div>
+    <div class="nav-item" onclick="show('storage')"><span class="nav-icon">💾</span>Storage & I/O Engine</div>
+
+    <div class="nav-section-label">Operations</div>
+    <div class="nav-item" onclick="show('users')"><span class="nav-icon">🔐</span>Users & IAM Security</div>
+    <div class="nav-item" onclick="show('replication')"><span class="nav-icon">🔁</span>HA & Replication</div>
+    <div class="nav-item" onclick="show('backup')"><span class="nav-icon">🛡️</span>Backup & Recovery</div>
+    <div class="nav-item" onclick="show('maintenance')"><span class="nav-icon">🔧</span>Maintenance & Patching</div>
+
+    <div class="nav-section-label">Performance</div>
+    <div class="nav-item" onclick="show('perf')"><span class="nav-icon">📊</span>Performance Tuning</div>
+    <div class="nav-item" onclick="show('query')"><span class="nav-icon">🔍</span>Query Optimization</div>
+    <div class="nav-item" onclick="show('columnar')"><span class="nav-icon">⚡</span>Columnar Engine</div>
+    <div class="nav-item" onclick="show('connections')"><span class="nav-icon">🌐</span>Connection Management</div>
+
+    <div class="nav-section-label">Monitoring & Fixing</div>
+    <div class="nav-item" onclick="show('monitoring')"><span class="nav-icon">🖥️</span>Monitoring & Observability</div>
+    <div class="nav-item" onclick="show('troubleshoot')"><span class="nav-icon">🚨</span>Troubleshooting</div>
+    <div class="nav-item" onclick="show('vacuuming')"><span class="nav-icon">🧹</span>Vacuuming & Bloat</div>
+    <div class="nav-item" onclick="show('locks')"><span class="nav-icon">🔒</span>Locks & Deadlocks</div>
+
+    <div class="nav-section-label">Advanced</div>
+    <div class="nav-item" onclick="show('ai')"><span class="nav-icon">🤖</span>AI & pgvector</div>
+    <div class="nav-item" onclick="show('migration')"><span class="nav-icon">🚚</span>Migration Strategies</div>
+    <div class="nav-item" onclick="show('checklist')"><span class="nav-icon">✅</span>DBA Runbook</div>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="content-hero">
+    <div class="breadcrumb">GCP / <span>AlloyDB for PostgreSQL</span> / DBA Guide</div>
+    <div class="hero-title">AlloyDB DBA<br>Complete Reference</div>
+    <div class="hero-sub">From cluster architecture to deep performance tuning — everything a production DBA needs to operate AlloyDB at scale.</div>
+    <div class="hero-tags">
+      <span class="tag tag-green">PostgreSQL-compatible</span>
+      <span class="tag tag-blue">Google Cloud</span>
+      <span class="tag tag-amber">Production-grade</span>
+      <span class="tag tag-green">HA + Read Pools</span>
+      <span class="tag tag-blue">Columnar Engine</span>
+    </div>
+  </div>
+
+  <!-- ======================== OVERVIEW ======================== -->
+  <section id="overview" class="section active">
+    <div class="section-title">Architecture Overview</div>
+    <div class="section-desc">AlloyDB is Google's fully managed PostgreSQL-compatible database built for demanding OLTP + HTAP workloads. Understanding its unique architecture is the DBA's starting point.</div>
+
+    <h2>What Makes AlloyDB Different</h2>
+    <p>AlloyDB separates compute from storage — the database engine (PostgreSQL-compatible) runs in GCE VMs, while storage is handled by a distributed, log-structured system across Google's infrastructure. This is fundamentally different from vanilla PostgreSQL.</p>
+
+    <div class="card-grid">
+      <div class="card green">
+        <div class="card-icon">🧠</div>
+        <div class="card-title">Adaptive Query Processing</div>
+        <div class="card-body">ML-driven optimizer learns query patterns, auto-tunes vacuum, and intelligently routes reads between row and columnar engines without manual hints.</div>
+      </div>
+      <div class="card blue">
+        <div class="card-icon">⚡</div>
+        <div class="card-title">Distributed Storage Layer</div>
+        <div class="card-body">6-way replication across 2 zones. No shared storage bottleneck. WAL writes are durable before the engine returns ACK. 99.99% SLA for regional clusters.</div>
+      </div>
+      <div class="card amber">
+        <div class="card-icon">📐</div>
+        <div class="card-title">Columnar Engine (built-in)</div>
+        <div class="card-body">Auto-converts frequently scanned columns to columnar format in memory. Delivers up to 100x speedup on analytical queries without ETL to a warehouse.</div>
+      </div>
+      <div class="card red">
+        <div class="card-icon">🔁</div>
+        <div class="card-title">Zero-Downtime Failover</div>
+        <div class="card-body">Standby instance with RPO near 0. Failover in &lt;60 seconds. Read pool instances independently scalable and serve stale reads during primary failover.</div>
+      </div>
+    </div>
+
+    <h2>Cluster Topology</h2>
+    <div class="code-label">Cluster anatomy</div>
+    <div class="code-block">
+<span class="cm">┌─────────────────────────────────────────────────────┐</span>
+<span class="cm">│                   AlloyDB CLUSTER                   │</span>
+<span class="cm">│                                                     │</span>
+<span class="cm">│  ┌──────────────┐    ┌──────────────────────────┐  │</span>
+<span class="cm">│  │   PRIMARY    │    │     READ POOL(s)          │  │</span>
+<span class="cm">│  │   INSTANCE   │───▶│  (1-20 nodes, auto-scale) │  │</span>
+<span class="cm">│  │  (R/W)       │    │  (RO, lag &lt;50ms typical)  │  │</span>
+<span class="cm">│  └──────┬───────┘    └──────────────────────────┘  │</span>
+<span class="cm">│         │                                           │</span>
+<span class="cm">│  ┌──────▼───────────────────────────────────────┐  │</span>
+<span class="cm">│  │      ALLOYDB STORAGE LAYER (Regional)        │  │</span>
+<span class="cm">│  │   6-way replica · Log-structured · NVMe-fast │  │</span>
+<span class="cm">│  │   Zone A (2 copies) + Zone B (2) + Zone C(2) │  │</span>
+<span class="cm">│  └──────────────────────────────────────────────┘  │</span>
+<span class="cm">└─────────────────────────────────────────────────────┘</span>
+    </div>
+
+    <h2>Key Technical Differences vs Cloud SQL / Self-Managed PG</h2>
+    <table class="data-table">
+      <tr><th>Feature</th><th>AlloyDB</th><th>Cloud SQL PG</th><th>Self-managed PG</th></tr>
+      <tr><td>Storage</td><td>Distributed, 6x replicated</td><td>Persistent Disk</td><td>Local / SAN / EBS</td></tr>
+      <tr><td>HA failover RTO</td><td>&lt;60s</td><td>~60-120s</td><td>Manual / Patroni</td></tr>
+      <tr><td>Read scaling</td><td>Read Pool (up to 20 nodes)</td><td>Read replicas</td><td>Streaming replicas</td></tr>
+      <tr><td>Columnar</td><td>Built-in, auto</td><td>None</td><td>Extension only</td></tr>
+      <tr><td>PITR granularity</td><td>1-second</td><td>1-second</td><td>WAL-based</td></tr>
+      <tr><td>Connection pooling</td><td>Built-in pgBouncer tier</td><td>No built-in</td><td>Manual</td></tr>
+      <tr><td>Vacuum</td><td>ML-accelerated auto-vacuum</td><td>Standard autovacuum</td><td>Standard autovacuum</td></tr>
+    </table>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">ℹ️</div>
+      <div>AlloyDB is PostgreSQL 14/15 wire-compatible. Extensions, psql, pg_dump, JDBC/libpq all work unmodified. However, some GUC parameters behave differently due to the decoupled storage layer.</div>
+    </div>
+  </section>
+
+  <!-- ======================== SETUP ======================== -->
+  <section id="setup" class="section">
+    <div class="section-title">Setup & Configuration</div>
+    <div class="section-desc">Provisioning clusters, setting instance flags, and configuring the environment for production use.</div>
+
+    <h2>Provisioning via gcloud</h2>
+    <div class="code-label">Create cluster + primary instance</div>
+    <div class="code-block">
+<span class="cm"># 1. Create the cluster (defines region, VPC, PG version)</span>
+gcloud alloydb clusters create <span class="tbl">prod-cluster</span> \
+  --region=<span class="str">us-central1</span> \
+  --network=<span class="str">projects/MY_PROJECT/global/networks/my-vpc</span> \
+  --password=<span class="str">STRONG_PASS</span> \
+  --database-version=<span class="str">POSTGRES_15</span>
+
+<span class="cm"># 2. Create primary instance</span>
+gcloud alloydb instances create <span class="tbl">primary-1</span> \
+  --cluster=<span class="tbl">prod-cluster</span> \
+  --region=<span class="str">us-central1</span> \
+  --instance-type=<span class="str">PRIMARY</span> \
+  --cpu-count=<span class="num">8</span> \
+  --database-flags=<span class="str">max_connections=500,work_mem=16MB</span>
+
+<span class="cm"># 3. Create read pool (min 1, max 20 nodes)</span>
+gcloud alloydb instances create <span class="tbl">read-pool-1</span> \
+  --cluster=<span class="tbl">prod-cluster</span> \
+  --region=<span class="str">us-central1</span> \
+  --instance-type=<span class="str">READ_POOL</span> \
+  --cpu-count=<span class="num">4</span> \
+  --read-pool-node-count=<span class="num">2</span>
+    </div>
+
+    <h2>Critical PostgreSQL Flags for AlloyDB</h2>
+    <table class="data-table">
+      <tr><th>Flag</th><th>Recommended Value</th><th>Why</th></tr>
+      <tr><td>max_connections</td><td>200–500 (use pgBouncer)</td><td>Each connection = ~5MB RAM. Use pooling.</td></tr>
+      <tr><td>shared_buffers</td><td>Managed by AlloyDB</td><td>Do NOT override — AlloyDB auto-tunes.</td></tr>
+      <tr><td>work_mem</td><td>16–64MB (per sort/hash)</td><td>High parallelism: set lower per connection.</td></tr>
+      <tr><td>effective_cache_size</td><td>75% of RAM</td><td>Planner hint for index usage decisions.</td></tr>
+      <tr><td>random_page_cost</td><td>1.1 (SSD-backed)</td><td>AlloyDB storage is NVMe-fast.</td></tr>
+      <tr><td>checkpoint_completion_target</td><td>0.9</td><td>Spread I/O; AlloyDB manages WAL differently.</td></tr>
+      <tr><td>enable_columnar_scan</td><td>on</td><td>Enables AlloyDB columnar engine acceleration.</td></tr>
+      <tr><td>log_min_duration_statement</td><td>1000 (ms)</td><td>Log slow queries for review.</td></tr>
+      <tr><td>idle_in_transaction_session_timeout</td><td>300000 (5 min)</td><td>Kill hung transactions automatically.</td></tr>
+    </table>
+
+    <h2>Connecting to AlloyDB</h2>
+    <div class="code-label">Auth Proxy (recommended for apps)</div>
+    <div class="code-block">
+<span class="cm"># Download and run AlloyDB Auth Proxy</span>
+./alloydb-auth-proxy \
+  <span class="str">"projects/PROJECT/locations/REGION/clusters/CLUSTER/instances/INSTANCE"</span> \
+  --port=<span class="num">5432</span> \
+  --credentials-file=<span class="str">service-account.json</span>
+
+<span class="cm"># Connect via psql through proxy</span>
+psql <span class="str">"host=127.0.0.1 port=5432 dbname=mydb user=postgres"</span>
+    </div>
+
+    <div class="code-label">Direct PSC (Private Service Connect) connection</div>
+    <div class="code-block">
+<span class="cm"># Get the PSC IP from cluster details</span>
+gcloud alloydb instances describe <span class="tbl">primary-1</span> \
+  --cluster=<span class="tbl">prod-cluster</span> \
+  --region=<span class="str">us-central1</span> \
+  --format=<span class="str">"value(ipAddress)"</span>
+
+<span class="cm"># Direct connection (from within VPC)</span>
+psql <span class="str">"host=10.x.x.x port=5432 dbname=mydb user=postgres sslmode=require"</span>
+    </div>
+  </section>
+
+  <!-- ======================== STORAGE ======================== -->
+  <section id="storage" class="section">
+    <div class="section-title">Storage & I/O Engine</div>
+    <div class="section-desc">AlloyDB's distributed storage fundamentally changes how DBAs think about I/O, WAL, and durability.</div>
+
+    <h2>How the Storage Layer Works</h2>
+    <p>Unlike traditional PG where the engine writes heap pages to local disk, AlloyDB sends WAL records to the storage layer, which reconstructs pages on demand. The engine never writes full pages to storage — only log records. This is called <strong>log-is-the-database</strong>.</p>
+
+    <div class="card-grid">
+      <div class="card green">
+        <div class="card-icon">📝</div>
+        <div class="card-title">Write Path</div>
+        <div class="card-body">Engine → WAL records → Storage shard leaders → 6-way replication ACK → commit returns. Full pages reconstructed lazily by storage nodes from log replay.</div>
+      </div>
+      <div class="card blue">
+        <div class="card-icon">📖</div>
+        <div class="card-title">Read Path</div>
+        <div class="card-body">Engine reads from local buffer cache first. On miss, fetches page from nearest storage shard. Storage nodes serve the latest page version from their log replay.</div>
+      </div>
+    </div>
+
+    <h2>Key Implications for DBAs</h2>
+    <ul class="styled">
+      <li><strong>No tune needed for checkpoint_segments</strong> — AlloyDB handles WAL recycling differently; there are no local WAL files to fill up.</li>
+      <li><strong>wal_level = logical</strong> is supported for logical replication downstream.</li>
+      <li><strong>pg_basebackup does not work</strong> — use built-in backup APIs or PITR.</li>
+      <li><strong>Tablespaces</strong> — not meaningfully applicable; storage sharding is automatic.</li>
+      <li><strong>Storage auto-grows</strong> — no pre-allocated disk size; billed per GB used.</li>
+      <li><strong>IOPS are not a tuning knob</strong> — the storage layer is shared, elastic, and managed.</li>
+    </ul>
+
+    <h2>Monitoring Storage Health</h2>
+    <div class="code-label">Database and table sizes</div>
+    <div class="code-block">
+<span class="cm">-- Top 10 largest tables</span>
+<span class="kw">SELECT</span>
+  schemaname,
+  tablename,
+  <span class="fn">pg_size_pretty</span>(<span class="fn">pg_total_relation_size</span>(schemaname||<span class="str">'.'</span>||tablename)) <span class="kw">AS</span> total_size,
+  <span class="fn">pg_size_pretty</span>(<span class="fn">pg_relation_size</span>(schemaname||<span class="str">'.'</span>||tablename)) <span class="kw">AS</span> table_size,
+  <span class="fn">pg_size_pretty</span>(<span class="fn">pg_total_relation_size</span>(schemaname||<span class="str">'.'</span>||tablename) -
+                 <span class="fn">pg_relation_size</span>(schemaname||<span class="str">'.'</span>||tablename)) <span class="kw">AS</span> indexes_size
+<span class="kw">FROM</span> information_schema.tables
+<span class="kw">WHERE</span> table_schema <span class="op">NOT IN</span> (<span class="str">'pg_catalog'</span>, <span class="str">'information_schema'</span>)
+<span class="kw">ORDER BY</span> <span class="fn">pg_total_relation_size</span>(schemaname||<span class="str">'.'</span>||tablename) <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">10</span>;
+    </div>
+  </section>
+
+  <!-- ======================== USERS ======================== -->
+  <section id="users" class="section">
+    <div class="section-title">Users, Roles & IAM Security</div>
+    <div class="section-desc">AlloyDB integrates both native PostgreSQL roles and Google Cloud IAM for authentication. Understanding both layers is essential.</div>
+
+    <h2>Authentication Modes</h2>
+    <div class="card-grid">
+      <div class="card green">
+        <div class="card-icon">🔑</div>
+        <div class="card-title">Built-in Auth (MD5/SCRAM)</div>
+        <div class="card-body">Standard PostgreSQL username/password. Managed via CREATE USER / ALTER USER. Used by the 'postgres' superuser and internal service accounts.</div>
+      </div>
+      <div class="card blue">
+        <div class="card-icon">🏢</div>
+        <div class="card-title">IAM Auth (recommended)</div>
+        <div class="card-body">Users authenticate using their Google identity token (no password stored). Requires AlloyDB Auth Proxy or PSC with IAM validation. More secure for GCP workloads.</div>
+      </div>
+    </div>
+
+    <h2>Role Management Best Practices</h2>
+    <div class="code-label">Creating application roles (least-privilege)</div>
+    <div class="code-block">
+<span class="cm">-- Create a read-only role</span>
+<span class="kw">CREATE ROLE</span> <span class="tbl">app_readonly</span>;
+<span class="kw">GRANT CONNECT ON DATABASE</span> mydb <span class="kw">TO</span> <span class="tbl">app_readonly</span>;
+<span class="kw">GRANT USAGE ON SCHEMA</span> public <span class="kw">TO</span> <span class="tbl">app_readonly</span>;
+<span class="kw">GRANT SELECT ON ALL TABLES IN SCHEMA</span> public <span class="kw">TO</span> <span class="tbl">app_readonly</span>;
+<span class="kw">ALTER DEFAULT PRIVILEGES IN SCHEMA</span> public
+  <span class="kw">GRANT SELECT ON TABLES TO</span> <span class="tbl">app_readonly</span>;
+
+<span class="cm">-- Read-write application role</span>
+<span class="kw">CREATE ROLE</span> <span class="tbl">app_readwrite</span>;
+<span class="kw">GRANT CONNECT ON DATABASE</span> mydb <span class="kw">TO</span> <span class="tbl">app_readwrite</span>;
+<span class="kw">GRANT USAGE ON SCHEMA</span> public <span class="kw">TO</span> <span class="tbl">app_readwrite</span>;
+<span class="kw">GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA</span> public
+  <span class="kw">TO</span> <span class="tbl">app_readwrite</span>;
+<span class="kw">GRANT USAGE ON ALL SEQUENCES IN SCHEMA</span> public <span class="kw">TO</span> <span class="tbl">app_readwrite</span>;
+
+<span class="cm">-- Create IAM-authenticated user</span>
+<span class="kw">CREATE USER</span> <span class="str">"user@company.com"</span>;
+<span class="kw">GRANT</span> <span class="tbl">app_readwrite</span> <span class="kw">TO</span> <span class="str">"user@company.com"</span>;
+    </div>
+
+    <h2>IAM Roles for AlloyDB (GCP level)</h2>
+    <table class="data-table">
+      <tr><th>IAM Role</th><th>Access Level</th><th>Use For</th></tr>
+      <tr><td>roles/alloydb.admin</td><td>Full control</td><td>DBA team, infra admins</td></tr>
+      <tr><td>roles/alloydb.client</td><td>Connect via proxy</td><td>Application service accounts</td></tr>
+      <tr><td>roles/alloydb.viewer</td><td>Read metadata</td><td>Monitoring, ops dashboards</td></tr>
+      <tr><td>roles/alloydb.databaseUser</td><td>DB-level IAM auth</td><td>IAM-authenticated DB users</td></tr>
+    </table>
+
+    <h2>Auditing & Security Hardening</h2>
+    <div class="code-label">Enable pg_audit and track all DDL</div>
+    <div class="code-block">
+<span class="cm">-- Enable pgaudit extension</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pgaudit;
+
+<span class="cm">-- Audit all DDL and role changes cluster-wide (add to flags)</span>
+<span class="cm">-- pgaudit.log = 'ddl,role'</span>
+
+<span class="cm">-- Check current pg_hba (AlloyDB manages this, but validate)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> pg_hba_file_rules;
+
+<span class="cm">-- List all superusers (should be minimal)</span>
+<span class="kw">SELECT</span> usename, usesuper, usecreatedb, usecreaterole
+<span class="kw">FROM</span> pg_user
+<span class="kw">WHERE</span> usesuper = <span class="kw">true</span>;
+    </div>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">🚨</div>
+      <div><strong>Never use the 'postgres' superuser for applications.</strong> Create dedicated roles with minimal privileges. Rotate the postgres password regularly and restrict its use to break-glass scenarios.</div>
+    </div>
+  </section>
+
+  <!-- ======================== HA / REPLICATION ======================== -->
+  <section id="replication" class="section">
+    <div class="section-title">High Availability & Replication</div>
+    <div class="section-desc">AlloyDB provides built-in HA at both the storage and compute layers. Understanding failover mechanics prevents surprises during incidents.</div>
+
+    <h2>HA Architecture</h2>
+    <p>AlloyDB HA is achieved through <strong>two mechanisms</strong>: storage-level 6-way replication (automatic, always-on) and a hot standby instance in a different zone for compute failover.</p>
+
+    <div class="metrics">
+      <div class="metric"><div class="metric-val">&lt;60s</div><div class="metric-label">RTO (failover time)</div></div>
+      <div class="metric"><div class="metric-val">~0s</div><div class="metric-label">RPO (data loss)</div></div>
+      <div class="metric"><div class="metric-val">99.99%</div><div class="metric-label">Regional SLA</div></div>
+      <div class="metric"><div class="metric-val">6x</div><div class="metric-label">Storage replication factor</div></div>
+    </div>
+
+    <h2>Read Pool Replication</h2>
+    <div class="code-label">Check replication lag on read pool</div>
+    <div class="code-block">
+<span class="cm">-- Run on primary to check read pool lag</span>
+<span class="kw">SELECT</span>
+  client_addr,
+  state,
+  sent_lsn,
+  replay_lsn,
+  <span class="fn">pg_wal_lsn_diff</span>(sent_lsn, replay_lsn) <span class="kw">AS</span> lag_bytes,
+  reply_time
+<span class="kw">FROM</span> pg_stat_replication
+<span class="kw">ORDER BY</span> lag_bytes <span class="kw">DESC</span>;
+
+<span class="cm">-- On read pool node: how far behind am I?</span>
+<span class="kw">SELECT</span>
+  now() - pg_last_xact_replay_timestamp() <span class="kw">AS</span> replication_delay,
+  <span class="fn">pg_is_in_recovery</span>() <span class="kw">AS</span> is_replica,
+  <span class="fn">pg_last_wal_replay_lsn</span>() <span class="kw">AS</span> replay_lsn;
+    </div>
+
+    <h2>Forcing a Manual Failover (Switchover)</h2>
+    <div class="code-label">gcloud failover command</div>
+    <div class="code-block">
+<span class="cm"># Promote standby (planned maintenance / testing)</span>
+gcloud alloydb instances failover <span class="tbl">primary-1</span> \
+  --cluster=<span class="tbl">prod-cluster</span> \
+  --region=<span class="str">us-central1</span>
+
+<span class="cm"># Watch failover status</span>
+gcloud alloydb operations list \
+  --cluster=<span class="tbl">prod-cluster</span> \
+  --region=<span class="str">us-central1</span>
+    </div>
+
+    <div class="callout callout-warn">
+      <div class="callout-icon">⚠️</div>
+      <div>Applications must implement <strong>retry logic</strong> and use the cluster endpoint (not instance-level IP) to survive failovers. Test your app's reconnect behavior before production failovers.</div>
+    </div>
+
+    <h2>Cross-Region Secondary Clusters</h2>
+    <div class="code-label">Create cross-region secondary (DR)</div>
+    <div class="code-block">
+<span class="cm"># Create secondary cluster in another region</span>
+gcloud alloydb clusters create <span class="tbl">prod-cluster-dr</span> \
+  --region=<span class="str">us-east1</span> \
+  --network=<span class="str">projects/MY_PROJECT/global/networks/my-vpc</span> \
+  --primary-cluster=<span class="str">projects/MY_PROJECT/locations/us-central1/clusters/prod-cluster</span>
+
+<span class="cm"># Add instance to secondary cluster</span>
+gcloud alloydb instances create <span class="tbl">secondary-1</span> \
+  --cluster=<span class="tbl">prod-cluster-dr</span> \
+  --region=<span class="str">us-east1</span> \
+  --instance-type=<span class="str">SECONDARY</span> \
+  --cpu-count=<span class="num">8</span>
+
+<span class="cm"># To promote secondary to primary (DR drill or real failover)</span>
+gcloud alloydb clusters promote <span class="tbl">prod-cluster-dr</span> \
+  --region=<span class="str">us-east1</span>
+    </div>
+  </section>
+
+  <!-- ======================== BACKUP ======================== -->
+  <section id="backup" class="section">
+    <div class="section-title">Backup & Recovery</div>
+    <div class="section-desc">AlloyDB provides automated continuous backups and PITR. As a DBA, you must know how to validate, trigger, and restore from them.</div>
+
+    <h2>Backup Types</h2>
+    <div class="card-grid">
+      <div class="card green">
+        <div class="card-icon">📸</div>
+        <div class="card-title">Automated Backups</div>
+        <div class="card-body">Daily snapshots, configurable window. Retained 1–35 days. Stored in Google Cloud Storage across regions. Incremental internally.</div>
+      </div>
+      <div class="card blue">
+        <div class="card-icon">⏱️</div>
+        <div class="card-title">PITR (Continuous)</div>
+        <div class="card-body">WAL archived continuously. Restore to any second within the backup window. Minimum WAL retention is 14 days by default.</div>
+      </div>
+      <div class="card amber">
+        <div class="card-icon">📦</div>
+        <div class="card-title">On-Demand Backups</div>
+        <div class="card-body">Trigger manually before major changes (migrations, schema changes). Not subject to automatic expiry — you control retention.</div>
+      </div>
+    </div>
+
+    <h2>Managing Backups</h2>
+    <div class="code-label">Backup operations via gcloud</div>
+    <div class="code-block">
+<span class="cm"># Create on-demand backup</span>
+gcloud alloydb backups create <span class="tbl">pre-migration-backup</span> \
+  --cluster=<span class="tbl">prod-cluster</span> \
+  --region=<span class="str">us-central1</span> \
+  --description=<span class="str">"Before schema migration v2.5"</span>
+
+<span class="cm"># List backups</span>
+gcloud alloydb backups list \
+  --filter=<span class="str">"clusterName:prod-cluster"</span> \
+  --region=<span class="str">us-central1</span> \
+  --format=<span class="str">"table(name, state, createTime, sizeBytes)"</span>
+
+<span class="cm"># Restore to a new cluster from backup</span>
+gcloud alloydb clusters restore <span class="tbl">prod-cluster-restored</span> \
+  --region=<span class="str">us-central1</span> \
+  --backup=<span class="str">projects/PROJECT/locations/us-central1/backups/pre-migration-backup</span> \
+  --network=<span class="str">projects/PROJECT/global/networks/my-vpc</span>
+
+<span class="cm"># PITR restore (restore to specific timestamp)</span>
+gcloud alloydb clusters restore <span class="tbl">prod-pitr-restore</span> \
+  --region=<span class="str">us-central1</span> \
+  --source-cluster=<span class="tbl">prod-cluster</span> \
+  --point-in-time=<span class="str">"2024-11-15T14:30:00Z"</span> \
+  --network=<span class="str">projects/PROJECT/global/networks/my-vpc</span>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">💡</div>
+      <div>Restores always create a <strong>new cluster</strong> — they do not overwrite the source. To "replace" a cluster, restore to new → validate → update DNS / connection strings → decommission old cluster.</div>
+    </div>
+
+    <h2>Backup Validation Checklist</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-content"><h4>Schedule monthly DR drills</h4><p>Actually restore a backup to a temporary cluster and validate data integrity. Don't assume backups work.</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-content"><h4>Validate row counts on key tables</h4><p>After restore, run COUNT(*) on business-critical tables and compare against pre-restore snapshots.</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-content"><h4>Test PITR to 5 minutes before an event</h4><p>Simulate an accidental DROP TABLE; restore to T-5min; confirm the table is present.</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-content"><h4>Document your RTO</h4><p>Time the full restore operation. For large databases (1TB+), restores can take 30–90 min. Factor this into your SLA.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ======================== MAINTENANCE ======================== -->
+  <section id="maintenance" class="section">
+    <div class="section-title">Maintenance & Patching</div>
+    <div class="section-desc">AlloyDB handles OS and PG minor version patches automatically, but DBAs must manage maintenance windows, extension upgrades, and major version upgrades.</div>
+
+    <h2>Maintenance Windows</h2>
+    <div class="code-label">Set maintenance window to off-peak hours</div>
+    <div class="code-block">
+<span class="cm"># Update cluster with maintenance window</span>
+gcloud alloydb clusters update <span class="tbl">prod-cluster</span> \
+  --region=<span class="str">us-central1</span> \
+  --maintenance-window-day=<span class="str">SUNDAY</span> \
+  --maintenance-window-start-time=<span class="str">"02:00"</span>
+
+<span class="cm"># Deny maintenance during a specific period (maintenance exemption)</span>
+gcloud alloydb clusters update <span class="tbl">prod-cluster</span> \
+  --region=<span class="str">us-central1</span> \
+  --deny-maintenance-period-start-date=<span class="str">"2024-11-25"</span> \
+  --deny-maintenance-period-end-date=<span class="str">"2024-12-02"</span> \
+  --deny-maintenance-period-time=<span class="str">"00:00"</span>
+    </div>
+
+    <h2>Extension Management</h2>
+    <div class="code-label">Supported AlloyDB extensions</div>
+    <div class="code-block">
+<span class="cm">-- List installed extensions</span>
+<span class="kw">SELECT</span> name, default_version, installed_version, comment
+<span class="kw">FROM</span> pg_available_extensions
+<span class="kw">WHERE</span> installed_version <span class="op">IS NOT NULL</span>
+<span class="kw">ORDER BY</span> name;
+
+<span class="cm">-- Common extensions to install</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pg_stat_statements;   <span class="cm">-- Query stats</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pgcrypto;             <span class="cm">-- Encryption</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> uuid-ossp;            <span class="cm">-- UUID generation</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> vector;               <span class="cm">-- pgvector AI</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pg_trgm;              <span class="cm">-- Trigram similarity</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> postgis;              <span class="cm">-- Geospatial</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pgaudit;              <span class="cm">-- Audit logging</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> google_columnar_engine; <span class="cm">-- AlloyDB columnar</span>
+    </div>
+  </section>
+
+  <!-- ======================== PERFORMANCE ======================== -->
+  <section id="perf" class="section">
+    <div class="section-title">Performance Tuning</div>
+    <div class="section-desc">AlloyDB auto-tunes many parameters, but DBAs still need to tune at the query, schema, and instance level for peak performance.</div>
+
+    <h2>Instance Sizing Guidelines</h2>
+    <table class="data-table">
+      <tr><th>vCPUs</th><th>Memory</th><th>Workload Profile</th><th>Notes</th></tr>
+      <tr><td>2</td><td>16GB</td><td>Dev / small apps</td><td>Not HA-eligible</td></tr>
+      <tr><td>4</td><td>32GB</td><td>Small production</td><td>&lt;500 QPS</td></tr>
+      <tr><td>8</td><td>64GB</td><td>Medium production</td><td>Most OLTP workloads</td></tr>
+      <tr><td>16</td><td>128GB</td><td>High-throughput OLTP</td><td>Complex queries, many connections</td></tr>
+      <tr><td>32</td><td>256GB</td><td>HTAP / mixed workloads</td><td>With columnar engine</td></tr>
+      <tr><td>64+</td><td>512GB+</td><td>Large-scale analytics</td><td>Columnar + read pools</td></tr>
+    </table>
+
+    <h2>Key Performance GUCs to Tune</h2>
+    <div class="code-label">Optimal settings for AlloyDB production</div>
+    <div class="code-block">
+<span class="cm">-- Check current values</span>
+<span class="kw">SHOW</span> work_mem;
+<span class="kw">SHOW</span> max_parallel_workers_per_gather;
+
+<span class="cm">-- Recommended session-level overrides for heavy ETL</span>
+<span class="kw">SET</span> work_mem = <span class="str">'256MB'</span>;
+<span class="kw">SET</span> max_parallel_workers_per_gather = <span class="num">4</span>;
+
+<span class="cm">-- For OLTP: keep work_mem lower (16–32MB) to avoid OOM</span>
+<span class="cm">-- because: 500 connections × 32MB × 10 sort nodes = 160GB!</span>
+
+<span class="cm">-- Enable JIT for analytical queries (on by default in PG14+)</span>
+<span class="kw">SET</span> jit = <span class="kw">on</span>;
+<span class="kw">SET</span> jit_above_cost = <span class="num">100000</span>;
+
+<span class="cm">-- Parallel query tuning</span>
+<span class="kw">SET</span> max_parallel_workers = <span class="num">8</span>;           <span class="cm">-- = vCPU count</span>
+<span class="kw">SET</span> parallel_tuple_cost = <span class="num">0.1</span>;
+<span class="kw">SET</span> parallel_setup_cost = <span class="num">1000</span>;
+    </div>
+
+    <h2>Index Strategy</h2>
+    <div class="code-label">Finding missing indexes and redundant indexes</div>
+    <div class="code-block">
+<span class="cm">-- Tables with sequential scans (missing index candidates)</span>
+<span class="kw">SELECT</span>
+  schemaname, relname,
+  seq_scan, seq_tup_read,
+  idx_scan,
+  <span class="fn">ROUND</span>(seq_scan::numeric / (seq_scan + idx_scan + <span class="num">1</span>), <span class="num">2</span>) <span class="kw">AS</span> seq_ratio
+<span class="kw">FROM</span> pg_stat_user_tables
+<span class="kw">WHERE</span> seq_scan > <span class="num">1000</span>
+  <span class="kw">AND</span> (seq_scan + idx_scan) > <span class="num">0</span>
+<span class="kw">ORDER BY</span> seq_tup_read <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">20</span>;
+
+<span class="cm">-- Unused indexes (consuming write overhead + storage)</span>
+<span class="kw">SELECT</span>
+  schemaname, tablename, indexname,
+  idx_scan,
+  <span class="fn">pg_size_pretty</span>(<span class="fn">pg_relation_size</span>(indexrelid)) <span class="kw">AS</span> index_size
+<span class="kw">FROM</span> pg_stat_user_indexes
+<span class="kw">WHERE</span> idx_scan = <span class="num">0</span>
+  <span class="kw">AND</span> indexname <span class="op">NOT LIKE</span> <span class="str">'%pkey%'</span>
+<span class="kw">ORDER BY</span> <span class="fn">pg_relation_size</span>(indexrelid) <span class="kw">DESC</span>;
+
+<span class="cm">-- Create index concurrently (no table lock!)</span>
+<span class="kw">CREATE INDEX CONCURRENTLY</span> idx_orders_user_created
+  <span class="kw">ON</span> <span class="tbl">orders</span> (user_id, created_at <span class="kw">DESC</span>)
+  <span class="kw">WHERE</span> status <span class="op">!=</span> <span class="str">'cancelled'</span>;  <span class="cm">-- partial index</span>
+    </div>
+
+    <h2>EXPLAIN ANALYZE — Reading Query Plans</h2>
+    <div class="code-label">Full plan analysis with buffers</div>
+    <div class="code-block">
+<span class="kw">EXPLAIN</span> (ANALYZE, BUFFERS, FORMAT TEXT, VERBOSE)
+<span class="kw">SELECT</span> u.id, u.email, <span class="fn">COUNT</span>(o.id)
+<span class="kw">FROM</span> <span class="tbl">users</span> u
+<span class="kw">JOIN</span> <span class="tbl">orders</span> o <span class="kw">ON</span> o.user_id = u.id
+<span class="kw">WHERE</span> o.created_at > now() - <span class="kw">interval</span> <span class="str">'30 days'</span>
+<span class="kw">GROUP BY</span> u.id, u.email;
+
+<span class="cm">/*
+Look for:
+  Seq Scan on large tables → add index
+  Hash Join with high "Rows Removed" → filter pushed down?
+  Buffers: hit=X read=Y → high 'read' means cache miss (cold)
+  "actual rows" << "estimated rows" → stale statistics → ANALYZE
+  Nested Loop on large outer table → consider Hash Join or index
+*/</span>
+    </div>
+
+    <h2>Statistics & the Planner</h2>
+    <div class="code-label">Update statistics and tune statistics targets</div>
+    <div class="code-block">
+<span class="cm">-- Full analyze</span>
+<span class="kw">ANALYZE</span> <span class="tbl">orders</span>;
+
+<span class="cm">-- Increase statistics for a skewed column (default=100, max=10000)</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">orders</span> <span class="kw">ALTER COLUMN</span> status
+  <span class="kw">SET STATISTICS</span> <span class="num">500</span>;
+<span class="kw">ANALYZE</span> <span class="tbl">orders</span>;
+
+<span class="cm">-- Extended statistics (multi-column correlation)</span>
+<span class="kw">CREATE STATISTICS</span> stat_orders_user_status
+  <span class="kw">ON</span> user_id, status
+  <span class="kw">FROM</span> <span class="tbl">orders</span>;
+<span class="kw">ANALYZE</span> <span class="tbl">orders</span>;
+    </div>
+  </section>
+
+  <!-- ======================== QUERY OPT ======================== -->
+  <section id="query" class="section">
+    <div class="section-title">Query Optimization</div>
+    <div class="section-desc">Finding and fixing slow queries is the core DBA skill. AlloyDB's pg_stat_statements integration makes this systematic.</div>
+
+    <h2>Identifying Slow Queries</h2>
+    <div class="code-label">pg_stat_statements — top resource consumers</div>
+    <div class="code-block">
+<span class="cm">-- Enable (add to database flags): pg_stat_statements.track = all</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pg_stat_statements;
+
+<span class="cm">-- Top 10 queries by total time</span>
+<span class="kw">SELECT</span>
+  <span class="fn">LEFT</span>(query, <span class="num">80</span>) <span class="kw">AS</span> query_snippet,
+  calls,
+  <span class="fn">ROUND</span>(total_exec_time::numeric, <span class="num">2</span>) <span class="kw">AS</span> total_ms,
+  <span class="fn">ROUND</span>(mean_exec_time::numeric, <span class="num">2</span>) <span class="kw">AS</span> avg_ms,
+  <span class="fn">ROUND</span>(stddev_exec_time::numeric, <span class="num">2</span>) <span class="kw">AS</span> stddev_ms,
+  rows,
+  <span class="fn">ROUND</span>((<span class="num">100</span> * total_exec_time / <span class="fn">SUM</span>(total_exec_time) <span class="kw">OVER</span> ())::numeric, <span class="num">2</span>) <span class="kw">AS</span> pct_total
+<span class="kw">FROM</span> pg_stat_statements
+<span class="kw">ORDER BY</span> total_exec_time <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">10</span>;
+
+<span class="cm">-- Highest avg latency (worst individual queries)</span>
+<span class="kw">SELECT</span>
+  <span class="fn">LEFT</span>(query, <span class="num">80</span>) <span class="kw">AS</span> query,
+  calls,
+  <span class="fn">ROUND</span>(mean_exec_time::numeric, <span class="num">2</span>) <span class="kw">AS</span> avg_ms,
+  <span class="fn">ROUND</span>(max_exec_time::numeric, <span class="num">2</span>) <span class="kw">AS</span> max_ms
+<span class="kw">FROM</span> pg_stat_statements
+<span class="kw">WHERE</span> calls > <span class="num">100</span>
+<span class="kw">ORDER BY</span> max_exec_time <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">15</span>;
+
+<span class="cm">-- Reset stats (do periodically or after tuning)</span>
+<span class="kw">SELECT</span> <span class="fn">pg_stat_statements_reset</span>();
+    </div>
+
+    <h2>Common Query Anti-Patterns & Fixes</h2>
+    <table class="data-table">
+      <tr><th>Anti-Pattern</th><th>Problem</th><th>Fix</th></tr>
+      <tr><td>SELECT *</td><td>Fetches unnecessary columns, prevents index-only scans</td><td>Select only needed columns</td></tr>
+      <tr><td>LIKE '%value%'</td><td>Leading wildcard forces full scan</td><td>Use pg_trgm GIN index or FTS</td></tr>
+      <tr><td>Function on indexed column</td><td>Index not used: WHERE LOWER(email)=...</td><td>Create expression index: ON users (LOWER(email))</td></tr>
+      <tr><td>OR instead of UNION</td><td>OR prevents index use on multi-column indexes</td><td>Rewrite as UNION ALL of simpler queries</td></tr>
+      <tr><td>N+1 queries</td><td>App loops, fires 1 query per row</td><td>Batch with IN clause or JOIN in single query</td></tr>
+      <tr><td>DISTINCT (over-used)</td><td>Hides bad joins; expensive sort+dedup</td><td>Fix the JOIN; use GROUP BY with intent</td></tr>
+      <tr><td>No LIMIT on reads</td><td>Full table scan returned to app</td><td>Always paginate: LIMIT + OFFSET or keyset pagination</td></tr>
+    </table>
+
+    <h2>Active Query Monitoring</h2>
+    <div class="code-label">What's running right now</div>
+    <div class="code-block">
+<span class="cm">-- Currently running queries (>5 seconds)</span>
+<span class="kw">SELECT</span>
+  pid,
+  usename,
+  application_name,
+  client_addr,
+  state,
+  wait_event_type,
+  wait_event,
+  <span class="fn">now</span>() - query_start <span class="kw">AS</span> duration,
+  <span class="fn">LEFT</span>(query, <span class="num">100</span>) <span class="kw">AS</span> query
+<span class="kw">FROM</span> pg_stat_activity
+<span class="kw">WHERE</span> state <span class="op">!=</span> <span class="str">'idle'</span>
+  <span class="kw">AND</span> query_start < now() - <span class="kw">interval</span> <span class="str">'5 seconds'</span>
+<span class="kw">ORDER BY</span> duration <span class="kw">DESC</span>;
+
+<span class="cm">-- Kill a specific query (replace 12345 with PID)</span>
+<span class="kw">SELECT</span> <span class="fn">pg_cancel_backend</span>(<span class="num">12345</span>);   <span class="cm">-- Graceful: sends SIGINT</span>
+<span class="kw">SELECT</span> <span class="fn">pg_terminate_backend</span>(<span class="num">12345</span>); <span class="cm">-- Hard kill: use if cancel fails</span>
+    </div>
+  </section>
+
+  <!-- ======================== COLUMNAR ======================== -->
+  <section id="columnar" class="section">
+    <div class="section-title">AlloyDB Columnar Engine</div>
+    <div class="section-desc">The AlloyDB columnar engine is one of its most powerful differentiators — providing HTAP capabilities without a separate analytics database.</div>
+
+    <h2>How It Works</h2>
+    <p>The columnar engine maintains a columnar representation of frequently accessed data <strong>in memory</strong> (separate from the shared_buffers heap cache). The query optimizer automatically routes scan-heavy query parts to the columnar engine while OLTP operations use the row engine.</p>
+
+    <div class="callout callout-success">
+      <div class="callout-icon">✅</div>
+      <div>The columnar engine does <strong>not</strong> require schema changes, separate tables, or query hints. It works transparently alongside your existing PostgreSQL schema.</div>
+    </div>
+
+    <h2>Setup & Management</h2>
+    <div class="code-label">Enable and configure the columnar engine</div>
+    <div class="code-block">
+<span class="cm">-- Enable the extension</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> google_columnar_engine;
+
+<span class="cm">-- Check columnar engine status</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> g_columnar_recommended_columns <span class="kw">LIMIT</span> <span class="num">20</span>;
+
+<span class="cm">-- Manually add a table to columnar (auto-selection also works)</span>
+<span class="kw">SELECT</span> <span class="fn">g_columnar_columns_add_relation</span>(<span class="str">'public'</span>, <span class="str">'orders'</span>);
+
+<span class="cm">-- Add specific columns (to save memory)</span>
+<span class="kw">SELECT</span> <span class="fn">g_columnar_columns_add</span>(<span class="str">'public'</span>, <span class="str">'orders'</span>,
+  <span class="str">'ARRAY[''created_at'',''status'',''amount'',''user_id'']'</span>);
+
+<span class="cm">-- Check what's in the columnar store</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> g_columnar_columns;
+
+<span class="cm">-- Verify query uses columnar (look for "Columnar Scan" in plan)</span>
+<span class="kw">EXPLAIN</span>
+<span class="kw">SELECT</span> status, <span class="fn">SUM</span>(amount) <span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">WHERE</span> created_at > now() - <span class="kw">interval</span> <span class="str">'90 days'</span>
+<span class="kw">GROUP BY</span> status;
+    </div>
+
+    <h2>When Columnar Helps</h2>
+    <div class="card-grid">
+      <div class="card green">
+        <div class="card-icon">✅</div>
+        <div class="card-title">Great Fit</div>
+        <div class="card-body">Aggregations over date ranges · Dashboards with GROUP BY · Reports scanning millions of rows · Historical data analysis · Rarely-updated wide tables</div>
+      </div>
+      <div class="card red">
+        <div class="card-icon">❌</div>
+        <div class="card-title">Not Suitable</div>
+        <div class="card-body">Point lookups by primary key · High-frequency INSERT/UPDATE tables · Very small tables · Queries fetching most columns per row</div>
+      </div>
+    </div>
+
+    <h2>Monitoring Columnar Usage</h2>
+    <div class="code-label">Check columnar hit rates</div>
+    <div class="code-block">
+<span class="cm">-- Columnar engine statistics</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> g_columnar_memory_stats;
+
+<span class="cm">-- See if queries are benefiting</span>
+<span class="kw">SELECT</span>
+  query,
+  columnar_unit_read,
+  columnar_unit_hit
+<span class="kw">FROM</span> g_columnar_stat_statements
+<span class="kw">WHERE</span> columnar_unit_read > <span class="num">0</span>
+<span class="kw">ORDER BY</span> columnar_unit_read <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">10</span>;
+    </div>
+  </section>
+
+  <!-- ======================== CONNECTIONS ======================== -->
+  <section id="connections" class="section">
+    <div class="section-title">Connection Management</div>
+    <div class="section-desc">Connection management is critical in AlloyDB. Each backend process costs ~5MB RAM. Unmanaged connections cause OOM, lock pile-ups, and degraded performance.</div>
+
+    <h2>AlloyDB Built-in Connection Pooling</h2>
+    <p>AlloyDB includes a built-in pgBouncer-based connection pooler accessible via a separate port (typically 5433). This provides transaction-mode pooling without deploying your own pgBouncer.</p>
+
+    <div class="code-label">Connect through built-in pooler</div>
+    <div class="code-block">
+<span class="cm"># Via Auth Proxy with pooler flag</span>
+./alloydb-auth-proxy \
+  <span class="str">"projects/PROJECT/locations/REGION/clusters/CLUSTER/instances/INSTANCE"</span> \
+  --use-builtin-pooler
+
+<span class="cm"># Direct pooler port (if using PSC)</span>
+psql <span class="str">"host=10.x.x.x port=5433 dbname=mydb user=postgres"</span>
+    </div>
+
+    <h2>Monitoring Connections</h2>
+    <div class="code-label">Connection health dashboard queries</div>
+    <div class="code-block">
+<span class="cm">-- Connection count by state and user</span>
+<span class="kw">SELECT</span>
+  usename,
+  application_name,
+  state,
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> connections,
+  <span class="fn">COUNT</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> wait_event <span class="op">IS NOT NULL</span>) <span class="kw">AS</span> waiting
+<span class="kw">FROM</span> pg_stat_activity
+<span class="kw">GROUP BY</span> usename, application_name, state
+<span class="kw">ORDER BY</span> connections <span class="kw">DESC</span>;
+
+<span class="cm">-- Connections vs max_connections</span>
+<span class="kw">SELECT</span>
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> current_connections,
+  (<span class="kw">SELECT</span> setting::int <span class="kw">FROM</span> pg_settings <span class="kw">WHERE</span> name=<span class="str">'max_connections'</span>) <span class="kw">AS</span> max_connections,
+  <span class="fn">ROUND</span>(<span class="num">100.0</span> * <span class="fn">COUNT</span>(*) /
+    (<span class="kw">SELECT</span> setting::int <span class="kw">FROM</span> pg_settings <span class="kw">WHERE</span> name=<span class="str">'max_connections'</span>), <span class="num">1</span>) <span class="kw">AS</span> pct_used
+<span class="kw">FROM</span> pg_stat_activity;
+
+<span class="cm">-- Idle connections holding locks (a bad pattern)</span>
+<span class="kw">SELECT</span> pid, usename, state, now() - state_change <span class="kw">AS</span> idle_for
+<span class="kw">FROM</span> pg_stat_activity
+<span class="kw">WHERE</span> state = <span class="str">'idle in transaction'</span>
+<span class="kw">ORDER BY</span> idle_for <span class="kw">DESC</span>;
+    </div>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">🚨</div>
+      <div><strong>"idle in transaction" connections are the #1 lock hazard.</strong> Set <code>idle_in_transaction_session_timeout = 300000</code> (5 min) as a cluster flag to auto-terminate these.</div>
+    </div>
+  </section>
+
+  <!-- ======================== MONITORING ======================== -->
+  <section id="monitoring" class="section">
+    <div class="section-title">Monitoring & Observability</div>
+    <div class="section-desc">AlloyDB exposes metrics through Cloud Monitoring, pg_stat_* views, and Query Insights. Use all three layers.</div>
+
+    <h2>Cloud Monitoring Key Metrics</h2>
+    <table class="data-table">
+      <tr><th>Metric</th><th>Alert Threshold</th><th>What It Means</th></tr>
+      <tr><td>alloydb/database/cpu/utilization</td><td>&gt;80% sustained</td><td>Instance is CPU-bound; scale up or optimize</td></tr>
+      <tr><td>alloydb/database/memory/utilization</td><td>&gt;90%</td><td>Risk of OOM; tune work_mem or scale</td></tr>
+      <tr><td>alloydb/database/network/connections</td><td>&gt;80% of max_connections</td><td>Near connection limit; enable pooling</td></tr>
+      <tr><td>alloydb/database/replication/replica_lag</td><td>&gt;30 seconds</td><td>Read pool falling behind primary</td></tr>
+      <tr><td>alloydb/database/transaction_count</td><td>Baseline deviation</td><td>Traffic spike or deadlock buildup</td></tr>
+      <tr><td>alloydb/database/storage/used_bytes</td><td>&gt;80% of budget</td><td>Plan for storage growth (auto-scales)</td></tr>
+    </table>
+
+    <h2>Query Insights (AlloyDB-native)</h2>
+    <p>AlloyDB Query Insights is a managed version of pg_stat_statements with a UI in Cloud Console. Enable it as a database flag and use it for top-N query analysis without writing SQL.</p>
+
+    <div class="code-label">Enable Query Insights via flag</div>
+    <div class="code-block">
+<span class="cm"># Enable via gcloud (or Cloud Console)</span>
+gcloud alloydb instances update <span class="tbl">primary-1</span> \
+  --cluster=<span class="tbl">prod-cluster</span> \
+  --region=<span class="str">us-central1</span> \
+  --database-flags=<span class="str">pg_stat_statements.track=all,</span>\
+<span class="str">google_columnar_engine.enabled=on</span>
+    </div>
+
+    <h2>Custom Monitoring Queries</h2>
+    <div class="code-label">Comprehensive health dashboard</div>
+    <div class="code-block">
+<span class="cm">-- Buffer cache hit ratio (want >99%)</span>
+<span class="kw">SELECT</span>
+  datname,
+  <span class="fn">ROUND</span>(<span class="num">100.0</span> * blks_hit / (blks_hit + blks_read + <span class="num">1</span>), <span class="num">2</span>) <span class="kw">AS</span> cache_hit_ratio,
+  blks_hit, blks_read,
+  xact_commit, xact_rollback,
+  deadlocks,
+  temp_files, temp_bytes
+<span class="kw">FROM</span> pg_stat_database
+<span class="kw">WHERE</span> datname <span class="op">NOT IN</span> (<span class="str">'template0'</span>, <span class="str">'template1'</span>);
+
+<span class="cm">-- Wait events (what are sessions waiting for?)</span>
+<span class="kw">SELECT</span>
+  wait_event_type,
+  wait_event,
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> sessions_waiting
+<span class="kw">FROM</span> pg_stat_activity
+<span class="kw">WHERE</span> wait_event <span class="op">IS NOT NULL</span>
+<span class="kw">GROUP BY</span> wait_event_type, wait_event
+<span class="kw">ORDER BY</span> sessions_waiting <span class="kw">DESC</span>;
+
+<span class="cm">-- Checkpoint frequency (should not be too high)</span>
+<span class="kw">SELECT</span>
+  checkpoints_timed, checkpoints_req,
+  checkpoint_write_time, checkpoint_sync_time,
+  buffers_checkpoint, buffers_clean, buffers_backend
+<span class="kw">FROM</span> pg_stat_bgwriter;
+    </div>
+  </section>
+
+  <!-- ======================== TROUBLESHOOTING ======================== -->
+  <section id="troubleshoot" class="section">
+    <div class="section-title">Troubleshooting</div>
+    <div class="section-desc">Systematic approaches to diagnosing AlloyDB performance incidents, connection storms, and resource exhaustion.</div>
+
+    <h2>Incident Response Framework</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-content"><h4>Triage: What's broken?</h4><p>Check Cloud Console alerts, pg_stat_activity for blocked queries, CPU/memory metrics. Is the primary up? Are read pools lagging?</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-content"><h4>Isolate: Which layer?</h4><p>App → Connection pool → Database → Storage. Check error messages, log files in Cloud Logging, and pg_stat_activity wait events.</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-content"><h4>Contain: Stop the bleeding</h4><p>Kill blocking queries, redirect reads to read pool, scale instance if OOM, or roll back recent deployments.</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-content"><h4>Resolve: Fix root cause</h4><p>Add missing index, fix query, tune GUC, increase pooling limits, or scale instance. Document and create alerts.</p></div></div>
+    </div>
+
+    <h2>High CPU — Diagnosis Script</h2>
+    <div class="code-label">Full CPU diagnosis playbook</div>
+    <div class="code-block">
+<span class="cm">-- Step 1: What queries are consuming CPU?</span>
+<span class="kw">SELECT</span>
+  pid, usename, state,
+  <span class="fn">now</span>() - query_start <span class="kw">AS</span> runtime,
+  wait_event,
+  <span class="fn">LEFT</span>(query, <span class="num">120</span>) <span class="kw">AS</span> query
+<span class="kw">FROM</span> pg_stat_activity
+<span class="kw">WHERE</span> state = <span class="str">'active'</span>
+<span class="kw">ORDER BY</span> runtime <span class="kw">DESC</span>;
+
+<span class="cm">-- Step 2: Historical top CPU from pg_stat_statements</span>
+<span class="kw">SELECT</span> <span class="fn">LEFT</span>(query,<span class="num">80</span>), calls, total_exec_time, mean_exec_time
+<span class="kw">FROM</span> pg_stat_statements
+<span class="kw">ORDER BY</span> total_exec_time <span class="kw">DESC LIMIT</span> <span class="num">5</span>;
+
+<span class="cm">-- Step 3: Are sequential scans killing us?</span>
+<span class="kw">SELECT</span> relname, seq_scan, idx_scan,
+  <span class="fn">ROUND</span>(<span class="num">100.0</span>*seq_scan/(seq_scan+idx_scan+<span class="num">1</span>),<span class="num">1</span>) <span class="kw">AS</span> seq_pct
+<span class="kw">FROM</span> pg_stat_user_tables
+<span class="kw">ORDER BY</span> seq_scan <span class="kw">DESC LIMIT</span> <span class="num">10</span>;
+    </div>
+
+    <h2>OOM / Memory Exhaustion</h2>
+    <div class="code-label">Memory diagnosis and mitigation</div>
+    <div class="code-block">
+<span class="cm">-- Identify high work_mem consumers (temp file usage)</span>
+<span class="kw">SELECT</span>
+  datname, temp_files, temp_bytes,
+  <span class="fn">pg_size_pretty</span>(temp_bytes) <span class="kw">AS</span> temp_size
+<span class="kw">FROM</span> pg_stat_database
+<span class="kw">ORDER BY</span> temp_bytes <span class="kw">DESC</span>;
+
+<span class="cm">-- Count connections using high memory (idle ones are wasteful)</span>
+<span class="kw">SELECT</span> state, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> pg_stat_activity <span class="kw">GROUP BY</span> state;
+
+<span class="cm">-- Emergency: kill all idle connections to reclaim memory</span>
+<span class="kw">SELECT</span> <span class="fn">pg_terminate_backend</span>(pid)
+<span class="kw">FROM</span> pg_stat_activity
+<span class="kw">WHERE</span> state = <span class="str">'idle'</span>
+  <span class="kw">AND</span> usename <span class="op">!=</span> <span class="str">'postgres'</span>
+  <span class="kw">AND</span> now() - state_change > <span class="kw">interval</span> <span class="str">'10 minutes'</span>;
+
+<span class="cm">-- Fix: reduce work_mem dynamically</span>
+<span class="kw">ALTER SYSTEM SET</span> work_mem = <span class="str">'8MB'</span>;
+<span class="kw">SELECT</span> <span class="fn">pg_reload_conf</span>();
+    </div>
+
+    <h2>Replication Lag Spike</h2>
+    <div class="code-label">Diagnose and resolve lag on read pool</div>
+    <div class="code-block">
+<span class="cm">-- On primary: check replication status</span>
+<span class="kw">SELECT</span>
+  application_name, state, sync_state,
+  <span class="fn">pg_wal_lsn_diff</span>(pg_current_wal_lsn(), replay_lsn) <span class="kw">AS</span> lag_bytes,
+  replay_lag
+<span class="kw">FROM</span> pg_stat_replication;
+
+<span class="cm">-- Common causes of lag:
+  1. Heavy write transaction on primary (large bulk import)
+  2. Read pool CPU saturated (scale the pool)
+  3. Network partition (check Cloud Console VPC health)
+  4. Vacuum on primary generating lots of WAL</span>
+
+<span class="cm">-- Scale read pool nodes (no downtime)</span>
+<span class="cm">-- gcloud alloydb instances update read-pool-1 \</span>
+<span class="cm">--   --read-pool-node-count=4 --cluster=prod-cluster ...</span>
+    </div>
+  </section>
+
+  <!-- ======================== VACUUMING ======================== -->
+  <section id="vacuuming" class="section">
+    <div class="section-title">Vacuuming & Table Bloat</div>
+    <div class="section-desc">AlloyDB uses ML-accelerated autovacuum but DBAs must still monitor bloat, XID wraparound risk, and tune autovacuum for high-churn tables.</div>
+
+    <h2>Why Vacuum Matters</h2>
+    <p>PostgreSQL uses MVCC — dead rows from UPDATE/DELETE are not immediately removed. Vacuum reclaims this space and prevents <strong>Transaction ID (XID) wraparound</strong>, which is a critical failure mode that causes the database to go read-only.</p>
+
+    <h2>Autovacuum Monitoring</h2>
+    <div class="code-label">Tables at risk — bloat and XID age</div>
+    <div class="code-block">
+<span class="cm">-- Tables with most dead tuples (vacuum needed)</span>
+<span class="kw">SELECT</span>
+  schemaname, relname,
+  n_dead_tup, n_live_tup,
+  <span class="fn">ROUND</span>(<span class="num">100.0</span> * n_dead_tup / (n_live_tup + n_dead_tup + <span class="num">1</span>), <span class="num">1</span>) <span class="kw">AS</span> dead_pct,
+  last_autovacuum, last_autoanalyze,
+  autovacuum_count
+<span class="kw">FROM</span> pg_stat_user_tables
+<span class="kw">WHERE</span> n_dead_tup > <span class="num">10000</span>
+<span class="kw">ORDER BY</span> n_dead_tup <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">20</span>;
+
+<span class="cm">-- XID wraparound risk (CRITICAL — alert if age > 1.5 billion)</span>
+<span class="kw">SELECT</span>
+  datname,
+  age(datfrozenxid) <span class="kw">AS</span> xid_age,
+  <span class="fn">ROUND</span>(age(datfrozenxid) / <span class="num">2100000000.0</span> * <span class="num">100</span>, <span class="num">2</span>) <span class="kw">AS</span> pct_to_wraparound
+<span class="kw">FROM</span> pg_database
+<span class="kw">ORDER BY</span> xid_age <span class="kw">DESC</span>;
+
+<span class="cm">-- Active autovacuum workers</span>
+<span class="kw">SELECT</span>
+  pid, relid::regclass <span class="kw">AS</span> table_name,
+  phase, heap_blks_total, heap_blks_scanned,
+  <span class="fn">now</span>() - query_start <span class="kw">AS</span> running_for
+<span class="kw">FROM</span> pg_stat_progress_vacuum;
+    </div>
+
+    <h2>Tuning Autovacuum for High-Churn Tables</h2>
+    <div class="code-label">Per-table autovacuum overrides</div>
+    <div class="code-block">
+<span class="cm">-- For high-write tables: vacuum more aggressively</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">orders</span> <span class="kw">SET</span> (
+  autovacuum_vacuum_scale_factor = <span class="num">0.01</span>,    <span class="cm">-- Vacuum at 1% dead rows (default 20%)</span>
+  autovacuum_analyze_scale_factor = <span class="num">0.005</span>,  <span class="cm">-- Analyze at 0.5% changes</span>
+  autovacuum_vacuum_cost_delay = <span class="num">2</span>,          <span class="cm">-- Less throttling (ms)</span>
+  autovacuum_vacuum_cost_limit = <span class="num">800</span>         <span class="cm">-- More I/O budget (default 200)</span>
+);
+
+<span class="cm">-- Manual vacuum (when autovacuum isn't keeping up)</span>
+<span class="kw">VACUUM</span> (ANALYZE, VERBOSE) <span class="tbl">orders</span>;
+
+<span class="cm">-- FULL vacuum (reclaims disk space but LOCKS TABLE — use with caution)</span>
+<span class="cm">-- Better alternative: pg_repack extension (online, no lock)</span>
+<span class="kw">VACUUM FULL</span> <span class="tbl">old_archive_table</span>;
+    </div>
+
+    <div class="callout callout-warn">
+      <div class="callout-icon">⚠️</div>
+      <div><strong>VACUUM FULL takes an exclusive lock</strong> that blocks all reads and writes. For production tables, use <code>pg_repack</code> instead — it rebuilds the table online. For AlloyDB, bloat also increases storage costs.</div>
+    </div>
+  </section>
+
+  <!-- ======================== LOCKS ======================== -->
+  <section id="locks" class="section">
+    <div class="section-title">Locks & Deadlocks</div>
+    <div class="section-desc">Lock contention is one of the top causes of production slowdowns. Learn to find, diagnose, and resolve lock conflicts quickly.</div>
+
+    <h2>Finding Lock Conflicts</h2>
+    <div class="code-label">Complete blocking chain query</div>
+    <div class="code-block">
+<span class="cm">-- Full blocking chain (who is blocking whom)</span>
+<span class="kw">WITH</span> <span class="tbl">lock_info</span> <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>
+    blocked.pid <span class="kw">AS</span> blocked_pid,
+    blocked.usename <span class="kw">AS</span> blocked_user,
+    blocking.pid <span class="kw">AS</span> blocking_pid,
+    blocking.usename <span class="kw">AS</span> blocking_user,
+    blocked.query <span class="kw">AS</span> blocked_query,
+    blocking.query <span class="kw">AS</span> blocking_query,
+    <span class="fn">now</span>() - blocked.query_start <span class="kw">AS</span> blocked_duration,
+    <span class="fn">now</span>() - blocking.query_start <span class="kw">AS</span> blocking_duration
+  <span class="kw">FROM</span> pg_stat_activity blocked
+  <span class="kw">JOIN</span> pg_locks blocked_locks
+    <span class="kw">ON</span> blocked_locks.pid = blocked.pid
+  <span class="kw">JOIN</span> pg_locks blocking_locks
+    <span class="kw">ON</span>  blocking_locks.locktype = blocked_locks.locktype
+    <span class="kw">AND</span> blocking_locks.relation = blocked_locks.relation
+    <span class="kw">AND</span> blocking_locks.granted = <span class="kw">true</span>
+    <span class="kw">AND</span> blocked_locks.granted = <span class="kw">false</span>
+  <span class="kw">JOIN</span> pg_stat_activity blocking
+    <span class="kw">ON</span> blocking.pid = blocking_locks.pid
+  <span class="kw">WHERE</span> blocked_locks.pid <span class="op">!=</span> blocking_locks.pid
+)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> lock_info <span class="kw">ORDER BY</span> blocked_duration <span class="kw">DESC</span>;
+    </div>
+
+    <h2>Deadlock Diagnosis</h2>
+    <div class="code-label">Find deadlocks in PostgreSQL logs</div>
+    <div class="code-block">
+<span class="cm">-- Deadlocks are logged automatically. Check Cloud Logging:</span>
+<span class="cm">-- resource.type="alloydb.googleapis.com/Instance"</span>
+<span class="cm">-- textPayload:"deadlock detected"</span>
+
+<span class="cm">-- Count deadlocks per database</span>
+<span class="kw">SELECT</span> datname, deadlocks
+<span class="kw">FROM</span> pg_stat_database
+<span class="kw">ORDER BY</span> deadlocks <span class="kw">DESC</span>;
+
+<span class="cm">-- Deadlock prevention: always acquire locks in the same order</span>
+<span class="cm">-- Example: always lock lower user_id first</span>
+<span class="kw">BEGIN</span>;
+  <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">accounts</span> <span class="kw">WHERE</span> id = <span class="fn">LEAST</span>(<span class="num">101</span>, <span class="num">202</span>) <span class="kw">FOR UPDATE</span>;
+  <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">accounts</span> <span class="kw">WHERE</span> id = <span class="fn">GREATEST</span>(<span class="num">101</span>, <span class="num">202</span>) <span class="kw">FOR UPDATE</span>;
+<span class="kw">COMMIT</span>;
+    </div>
+
+    <h2>DDL Lock Hazards</h2>
+    <div class="code-label">Safe schema changes on live tables</div>
+    <div class="code-block">
+<span class="cm">-- DANGEROUS: takes ACCESS EXCLUSIVE lock → blocks all reads + writes</span>
+<span class="kw">ALTER TABLE</span> orders <span class="kw">ADD COLUMN</span> notes TEXT;   <span class="cm">-- still instant in PG14+ (no rewrite)</span>
+<span class="kw">ALTER TABLE</span> orders <span class="kw">ADD COLUMN</span> total NUMERIC  <span class="cm">-- RISKY: non-null with default = full rewrite</span>
+  <span class="kw">NOT NULL DEFAULT</span> <span class="num">0</span>;
+
+<span class="cm">-- SAFE pattern: nullable first, backfill, then add constraint</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">orders</span> <span class="kw">ADD COLUMN</span> total NUMERIC;       <span class="cm">-- Step 1: instant</span>
+<span class="kw">UPDATE</span> <span class="tbl">orders</span> <span class="kw">SET</span> total = <span class="num">0</span> <span class="kw">WHERE</span> total <span class="kw">IS NULL</span>;   <span class="cm">-- Step 2: batch</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">orders</span>                                  <span class="cm">-- Step 3: validate in background</span>
+  <span class="kw">ADD CONSTRAINT</span> total_not_null <span class="kw">CHECK</span> (total <span class="op">IS NOT NULL</span>) <span class="kw">NOT VALID</span>;
+<span class="kw">ALTER TABLE</span> <span class="tbl">orders</span> <span class="kw">VALIDATE CONSTRAINT</span> total_not_null; <span class="cm">-- Step 4: ShareLock only</span>
+
+<span class="cm">-- Set statement timeout to avoid DDL blocking forever</span>
+<span class="kw">SET</span> lock_timeout = <span class="str">'3s'</span>;
+<span class="kw">ALTER TABLE</span> <span class="tbl">orders</span> <span class="kw">ADD COLUMN</span> notes TEXT;
+    </div>
+  </section>
+
+  <!-- ======================== AI / PGVECTOR ======================== -->
+  <section id="ai" class="section">
+    <div class="section-title">AI & pgvector</div>
+    <div class="section-desc">AlloyDB is Google's preferred vector database for AI workloads, with native pgvector support and ScaNN-based indexing for billion-scale vector similarity search.</div>
+
+    <h2>Why AlloyDB for AI Workloads</h2>
+    <div class="card-grid">
+      <div class="card green">
+        <div class="card-icon">🔢</div>
+        <div class="card-title">pgvector (OSS)</div>
+        <div class="card-body">Standard vector type and exact/approximate nearest-neighbor search. Up to 1536 dimensions (OpenAI embedding size). IVFFlat and HNSW indexes.</div>
+      </div>
+      <div class="card blue">
+        <div class="card-icon">🚀</div>
+        <div class="card-title">ScaNN Index (AlloyDB-native)</div>
+        <div class="card-body">Google's ScaNN algorithm: 10x faster than IVFFlat on recall benchmarks at scale. Use for >1M vectors. Requires AlloyDB-specific extension.</div>
+      </div>
+    </div>
+
+    <h2>Setting Up pgvector</h2>
+    <div class="code-label">Vector store for embeddings</div>
+    <div class="code-block">
+<span class="cm">-- Enable pgvector</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> vector;
+
+<span class="cm">-- Create a table with embedding column</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">documents</span> (
+  id          BIGSERIAL <span class="kw">PRIMARY KEY</span>,
+  content     TEXT,
+  metadata    JSONB,
+  embedding   vector(<span class="num">1536</span>)  <span class="cm">-- 1536 for text-embedding-ada-002</span>
+);
+
+<span class="cm">-- Insert an embedding (from your app)</span>
+<span class="kw">INSERT INTO</span> <span class="tbl">documents</span> (content, embedding)
+<span class="kw">VALUES</span> (<span class="str">'AlloyDB is a managed PostgreSQL service'</span>,
+        <span class="str">'[0.012, -0.034, 0.198, ...]'</span>::vector);
+
+<span class="cm">-- Create HNSW index (best recall, recommended for <1M vectors)</span>
+<span class="kw">CREATE INDEX</span> idx_documents_embedding
+  <span class="kw">ON</span> <span class="tbl">documents</span> <span class="kw">USING</span> hnsw (embedding vector_cosine_ops)
+  <span class="kw">WITH</span> (m=<span class="num">16</span>, ef_construction=<span class="num">64</span>);
+
+<span class="cm">-- Semantic similarity search (nearest 5 neighbors)</span>
+<span class="kw">SELECT</span>
+  id, content,
+  embedding <op>&lt;=></op> <span class="str">'[0.021, -0.011, ...]'</span>::vector <span class="kw">AS</span> distance
+<span class="kw">FROM</span> <span class="tbl">documents</span>
+<span class="kw">ORDER BY</span> distance
+<span class="kw">LIMIT</span> <span class="num">5</span>;
+    </div>
+
+    <h2>ScaNN Index (AlloyDB Exclusive)</h2>
+    <div class="code-label">Enable and use ScaNN for large-scale search</div>
+    <div class="code-block">
+<span class="cm">-- Enable ScaNN</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> alloydb_scann;
+
+<span class="cm">-- Create ScaNN index (great for >1M vectors)</span>
+<span class="kw">CREATE INDEX</span> idx_docs_scann
+  <span class="kw">ON</span> <span class="tbl">documents</span> <span class="kw">USING</span> scann (embedding cosine)
+  <span class="kw">WITH</span> (num_leaves=<span class="num">500</span>);
+
+<span class="cm">-- Query (same syntax as pgvector)</span>
+<span class="kw">SET</span> scann.num_leaves_to_search = <span class="num">50</span>; <span class="cm">-- recall/speed tradeoff</span>
+<span class="kw">SELECT</span> id, content, embedding <op>&lt;=></op> $1 <span class="kw">AS</span> dist
+<span class="kw">FROM</span> <span class="tbl">documents</span>
+<span class="kw">ORDER BY</span> dist <span class="kw">LIMIT</span> <span class="num">10</span>;
+    </div>
+  </section>
+
+  <!-- ======================== MIGRATION ======================== -->
+  <section id="migration" class="section">
+    <div class="section-title">Migration Strategies</div>
+    <div class="section-desc">Migrating to AlloyDB from PostgreSQL, Cloud SQL, or other databases. Choose the right strategy based on downtime tolerance.</div>
+
+    <h2>Migration Paths</h2>
+    <table class="data-table">
+      <tr><th>Source</th><th>Method</th><th>Downtime</th><th>Complexity</th></tr>
+      <tr><td>PostgreSQL (self-managed)</td><td>Database Migration Service (DMS)</td><td>Minutes (cutover)</td><td>Low</td></tr>
+      <tr><td>Cloud SQL for PostgreSQL</td><td>DMS or pg_dump/restore</td><td>Minutes to hours</td><td>Low–Medium</td></tr>
+      <tr><td>Oracle / SQL Server</td><td>Striim / Datastream + transform</td><td>Hours (with CDC)</td><td>High</td></tr>
+      <tr><td>MySQL / Aurora</td><td>pgloader / DMS + schema convert</td><td>Hours–Days</td><td>High</td></tr>
+    </table>
+
+    <h2>pg_dump / pg_restore Migration</h2>
+    <div class="code-label">Zero-downtime migration pattern</div>
+    <div class="code-block">
+<span class="cm"># Step 1: Dump schema only first</span>
+pg_dump --schema-only -Fc \
+  -h SOURCE_HOST -U postgres mydb > schema.dump
+
+<span class="cm"># Step 2: Restore schema to AlloyDB</span>
+pg_restore --schema-only -Fc \
+  -h ALLOYDB_IP -U postgres -d mydb schema.dump
+
+<span class="cm"># Step 3: Dump and restore data (parallel for speed)</span>
+pg_dump -Fd --jobs=8 \
+  -h SOURCE_HOST -U postgres mydb -f dump_dir/
+
+pg_restore -Fd --jobs=8 \
+  -h ALLOYDB_IP -U postgres -d mydb dump_dir/
+
+<span class="cm"># Step 4: Set up logical replication to catch up delta</span>
+<span class="cm"># (On source): wal_level=logical, create publication</span>
+<span class="kw">CREATE PUBLICATION</span> alloydb_migration <span class="kw">FOR ALL TABLES</span>;
+
+<span class="cm"># (On AlloyDB): create subscription</span>
+<span class="kw">CREATE SUBSCRIPTION</span> from_source
+  CONNECTION <span class="str">'host=SOURCE_IP dbname=mydb user=repl password=X'</span>
+  PUBLICATION alloydb_migration;
+
+<span class="cm"># Step 5: Wait for lag = 0, then cutover app connection strings</span>
+<span class="cm"># Step 6: Drop subscription, enjoy AlloyDB</span>
+    </div>
+  </section>
+
+  <!-- ======================== RUNBOOK ======================== -->
+  <section id="checklist" class="section">
+    <div class="section-title">DBA Runbook & Checklists</div>
+    <div class="section-desc">Your production reference checklists — daily, weekly, and for common incident types.</div>
+
+    <h2>Daily DBA Health Checks</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-content"><h4>Check replication lag</h4><p>Run pg_stat_replication on primary. Read pool lag should be &lt;30s. Alert if approaching 60s.</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-content"><h4>Review slow query log</h4><p>Check Cloud Logging for queries &gt;1000ms. Review Query Insights dashboard in Cloud Console.</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-content"><h4>Monitor connection counts</h4><p>Ensure connections &lt;80% of max_connections. Check for idle-in-transaction accumulation.</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-content"><h4>Verify backup completion</h4><p>Confirm last automated backup succeeded in Cloud Console → AlloyDB → Backups.</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-content"><h4>Check XID age</h4><p>Query pg_database for datfrozenxid age. Alert if &gt;1.5 billion (danger zone is ~2.1B).</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-content"><h4>CPU and memory baseline</h4><p>Review Cloud Monitoring dashboard. Spikes are normal; sustained &gt;80% requires investigation.</p></div></div>
+    </div>
+
+    <h2>Weekly DBA Tasks</h2>
+    <ul class="styled">
+      <li>Run ANALYZE on tables with high insert/update rates that autovacuum may miss</li>
+      <li>Review pg_stat_statements and reset after noting top-N queries</li>
+      <li>Check for bloated tables (n_dead_tup &gt; 20% of n_live_tup)</li>
+      <li>Review unused indexes and schedule removal during low-traffic window</li>
+      <li>Validate that on-demand backups exist before any planned schema changes</li>
+      <li>Review IAM permissions — any service accounts with excessive privileges?</li>
+      <li>Check AlloyDB release notes for upcoming maintenance or version changes</li>
+    </ul>
+
+    <h2>Emergency Quick-Reference</h2>
+    <div class="code-label">Incident response one-liners</div>
+    <div class="code-block">
+<span class="cm">-- Kill all queries running longer than 10 minutes (emergency)</span>
+<span class="kw">SELECT</span> <span class="fn">pg_terminate_backend</span>(pid)
+<span class="kw">FROM</span> pg_stat_activity
+<span class="kw">WHERE</span> state = <span class="str">'active'</span>
+  <span class="kw">AND</span> now() - query_start > <span class="kw">interval</span> <span class="str">'10 minutes'</span>
+  <span class="kw">AND</span> pid <op>!=</op> <span class="fn">pg_backend_pid</span>();
+
+<span class="cm">-- Find the blocking chain root</span>
+<span class="kw">SELECT</span> <span class="fn">pg_blocking_pids</span>(pid) <span class="kw">AS</span> blocked_by, *
+<span class="kw">FROM</span> pg_stat_activity <span class="kw">WHERE</span> <span class="fn">cardinality</span>(<span class="fn">pg_blocking_pids</span>(pid))>0;
+
+<span class="cm">-- Immediate table-level bloat estimate</span>
+<span class="kw">SELECT</span> relname,
+  <span class="fn">pg_size_pretty</span>(<span class="fn">pg_total_relation_size</span>(oid)) total,
+  n_dead_tup dead_rows
+<span class="kw">FROM</span> pg_class <span class="kw">JOIN</span> pg_stat_user_tables <span class="kw">USING</span>(relname)
+<span class="kw">WHERE</span> n_dead_tup > <span class="num">50000</span> <span class="kw">ORDER BY</span> n_dead_tup <span class="kw">DESC</span>;
+
+<span class="cm">-- Check if primary is writable</span>
+<span class="kw">SELECT</span> <span class="fn">pg_is_in_recovery</span>();  <span class="cm">-- false = primary, true = replica</span>
+
+<span class="cm">-- Current WAL position</span>
+<span class="kw">SELECT</span> <span class="fn">pg_current_wal_lsn</span>(), <span class="fn">pg_walfile_name</span>(<span class="fn">pg_current_wal_lsn</span>());
+    </div>
+
+    <div class="callout callout-success">
+      <div class="callout-icon">🏁</div>
+      <div><strong>You now have a comprehensive AlloyDB DBA reference.</strong> Bookmark this and use it alongside the official Google Cloud AlloyDB documentation at cloud.google.com/alloydb/docs for the latest API changes and new features.</div>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
