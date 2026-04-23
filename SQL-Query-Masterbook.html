@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Query Masterbook — DBA + Developer Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Fraunces:ital,wght@0,300;0,700;0,900;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #f5f0e8;
+  --surface:   #ede8df;
+  --surface2:  #e2dbd0;
+  --border:    #cec6b8;
+  --ink:       #1a1612;
+  --ink2:      #3d3529;
+  --muted:     #7a6f62;
+  --accent:    #c0392b;
+  --accent2:   #2c6e8a;
+  --accent3:   #5a7c3a;
+  --gold:      #b8860b;
+  --code-bg:   #1e1b16;
+  --code-text: #e8e0d4;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;
+  line-height:1.7;
+  min-height:100vh;
+}
+/* NOISE TEXTURE OVERLAY */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:0;
+  opacity:0.5;
+}
+
+/* LAYOUT */
+.shell{display:flex;min-height:100vh;position:relative;z-index:1}
+.sidebar{
+  width:270px;
+  min-height:100vh;
+  background:var(--ink);
+  color:var(--bg);
+  position:fixed;top:0;left:0;bottom:0;
+  overflow-y:auto;
+  display:flex;flex-direction:column;
+}
+.main{margin-left:270px;flex:1}
+
+/* SIDEBAR */
+.s-brand{
+  padding:32px 24px 24px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.s-eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin-bottom:8px;
+}
+.s-title{
+  font-family:'Fraunces',serif;
+  font-size:22px;
+  font-weight:900;
+  line-height:1.15;
+  color:#f5f0e8;
+}
+.s-title em{font-style:italic;color:rgba(245,240,232,0.55)}
+.s-nav{padding:16px 0;flex:1}
+.s-group{margin-bottom:4px}
+.s-group-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:rgba(245,240,232,0.35);
+  padding:12px 24px 4px;
+}
+.s-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 24px;
+  cursor:pointer;
+  color:rgba(245,240,232,0.55);
+  font-size:12.5px;
+  font-family:'DM Sans',sans-serif;
+  border-left:2px solid transparent;
+  transition:all 0.15s;
+  user-select:none;
+}
+.s-item:hover{color:#f5f0e8;background:rgba(255,255,255,0.05)}
+.s-item.active{color:#f5f0e8;border-left-color:var(--accent);background:rgba(192,57,43,0.12)}
+.s-num{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  color:rgba(245,240,232,0.2);
+  width:18px;
+  flex-shrink:0;
+}
+.s-item.active .s-num{color:var(--accent)}
+.s-footer{
+  padding:16px 24px;
+  border-top:1px solid rgba(255,255,255,0.08);
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  color:rgba(245,240,232,0.2);
+  letter-spacing:0.05em;
+}
+
+/* HERO */
+.hero{
+  background:var(--ink);
+  color:var(--bg);
+  padding:64px 64px 56px;
+  position:relative;
+  overflow:hidden;
+}
+.hero::after{
+  content:'SELECT';
+  position:absolute;
+  right:-20px;bottom:-40px;
+  font-family:'Fraunces',serif;
+  font-size:220px;
+  font-weight:900;
+  color:rgba(255,255,255,0.03);
+  pointer-events:none;
+  line-height:1;
+}
+.hero-tag{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+.hero-tag::before{content:'';display:block;width:24px;height:1px;background:var(--accent)}
+.hero-h{
+  font-family:'Fraunces',serif;
+  font-size:52px;
+  font-weight:900;
+  line-height:1.05;
+  margin-bottom:16px;
+}
+.hero-h em{font-style:italic;color:rgba(245,240,232,0.4)}
+.hero-sub{color:rgba(245,240,232,0.5);font-size:15px;max-width:540px;font-weight:300;margin-bottom:28px}
+.pill-row{display:flex;flex-wrap:wrap;gap:8px}
+.pill{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  padding:4px 12px;
+  border:1px solid rgba(255,255,255,0.12);
+  color:rgba(245,240,232,0.5);
+  border-radius:2px;
+  letter-spacing:0.06em;
+}
+
+/* SECTION */
+.sec{display:none;padding:52px 64px 80px;animation:rise 0.2s ease}
+.sec.active{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.sec-header{margin-bottom:40px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.sec-num{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  letter-spacing:0.15em;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+.sec-title{
+  font-family:'Fraunces',serif;
+  font-size:34px;
+  font-weight:900;
+  color:var(--ink);
+  line-height:1.1;
+}
+.sec-desc{color:var(--muted);font-size:14px;margin-top:8px;max-width:680px}
+
+/* H2, H3 */
+h2{
+  font-family:'Fraunces',serif;
+  font-size:20px;
+  font-weight:700;
+  color:var(--ink);
+  margin:40px 0 12px;
+  display:flex;align-items:baseline;gap:12px;
+}
+h2 .tag2{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  letter-spacing:0.12em;
+  padding:2px 7px;
+  border-radius:2px;
+  text-transform:uppercase;
+}
+.tag2-r{background:rgba(192,57,43,0.12);color:var(--accent);border:1px solid rgba(192,57,43,0.2)}
+.tag2-b{background:rgba(44,110,138,0.12);color:var(--accent2);border:1px solid rgba(44,110,138,0.2)}
+.tag2-g{background:rgba(90,124,58,0.12);color:var(--accent3);border:1px solid rgba(90,124,58,0.2)}
+.tag2-o{background:rgba(184,134,11,0.12);color:var(--gold);border:1px solid rgba(184,134,11,0.2)}
+h3{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin:24px 0 8px;
+}
+p{color:var(--ink2);font-size:13.5px;margin-bottom:12px;line-height:1.75}
+
+/* CODE */
+.code-wrap{margin:12px 0 24px}
+.code-header{
+  background:#2a2520;
+  padding:8px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-radius:6px 6px 0 0;
+}
+.code-label-top{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:rgba(232,224,212,0.35);
+}
+.code-dots{display:flex;gap:5px}
+.code-dot{width:8px;height:8px;border-radius:50%}
+.dot-r{background:#ff5f57}.dot-y{background:#febc2e}.dot-g{background:#28c840}
+pre{
+  background:var(--code-bg);
+  padding:20px 22px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  line-height:1.85;
+  overflow-x:auto;
+  border-radius:0 0 6px 6px;
+  color:var(--code-text);
+}
+/* SQL syntax colors */
+.kw{color:#e06c75}
+.fn{color:#61afef}
+.str{color:#98c379}
+.cm{color:#5c6370;font-style:italic}
+.num{color:#d19a66}
+.op{color:#56b6c2}
+.tbl{color:#e5c07b}
+.col{color:#abb2bf}
+.punc{color:#abb2bf}
+.param{color:#c678dd}
+
+/* GRID */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0 28px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:16px 0 28px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:18px 20px;
+}
+.card-t{font-family:'Fraunces',serif;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.card-b{color:var(--muted);font-size:12.5px;line-height:1.6}
+.card.accent-r{border-top:3px solid var(--accent)}
+.card.accent-b{border-top:3px solid var(--accent2)}
+.card.accent-g{border-top:3px solid var(--accent3)}
+.card.accent-o{border-top:3px solid var(--gold)}
+
+/* TABLE */
+table.ref{width:100%;border-collapse:collapse;margin:12px 0 28px;font-size:12.5px}
+table.ref th{
+  background:var(--surface2);
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+  padding:9px 14px;
+  text-align:left;
+  border-bottom:2px solid var(--border);
+}
+table.ref td{
+  padding:9px 14px;
+  border-bottom:1px solid rgba(206,198,184,0.4);
+  color:var(--ink2);
+  vertical-align:top;
+}
+table.ref td:first-child{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--accent2);
+}
+table.ref tr:last-child td{border-bottom:none}
+table.ref tr:hover td{background:rgba(0,0,0,0.02)}
+
+/* CALLOUT */
+.note{
+  border-left:3px solid;
+  padding:12px 16px;
+  margin:12px 0 20px;
+  font-size:13px;
+  line-height:1.65;
+  border-radius:0 4px 4px 0;
+}
+.note-warn{border-color:var(--gold);background:rgba(184,134,11,0.07);color:#7a6020}
+.note-info{border-color:var(--accent2);background:rgba(44,110,138,0.07);color:#1e4d60}
+.note-danger{border-color:var(--accent);background:rgba(192,57,43,0.07);color:#7a1e14}
+.note-tip{border-color:var(--accent3);background:rgba(90,124,58,0.07);color:#3a5220}
+strong{color:var(--ink);font-weight:600}
+
+/* DIVIDER */
+.div{height:1px;background:var(--border);margin:32px 0}
+
+/* CHAPTER MARKER */
+.chapter{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--ink);color:var(--bg);
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:0.12em;text-transform:uppercase;
+  padding:5px 14px;border-radius:2px;margin-bottom:20px;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1)}
+
+@media(max-width:768px){
+  .sidebar{width:100%;position:relative;min-height:auto}
+  .main{margin-left:0}
+  .sec{padding:32px 24px 60px}
+  .hero{padding:40px 24px 36px}
+  .hero-h{font-size:32px}
+  .grid2,.grid3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="s-brand">
+    <div class="s-eyebrow">SQL Masterbook</div>
+    <div class="s-title">Query<br><em>Arsenal</em></div>
+  </div>
+  <nav class="s-nav">
+
+    <div class="s-group">
+      <div class="s-group-label">Core DML</div>
+      <div class="s-item active" onclick="show('select')"><span class="s-num">01</span>SELECT — Advanced Patterns</div>
+      <div class="s-item" onclick="show('insert')"><span class="s-num">02</span>INSERT — Bulk & Upsert</div>
+      <div class="s-item" onclick="show('update')"><span class="s-num">03</span>UPDATE — Safe & Conditional</div>
+      <div class="s-item" onclick="show('delete')"><span class="s-num">04</span>DELETE & TRUNCATE</div>
+    </div>
+
+    <div class="s-group">
+      <div class="s-group-label">Aggregation & Analytics</div>
+      <div class="s-item" onclick="show('agg')"><span class="s-num">05</span>GROUP BY & Aggregates</div>
+      <div class="s-item" onclick="show('window')"><span class="s-num">06</span>Window Functions</div>
+      <div class="s-item" onclick="show('cte')"><span class="s-num">07</span>CTEs & Recursive Queries</div>
+    </div>
+
+    <div class="s-group">
+      <div class="s-group-label">Joins & Subqueries</div>
+      <div class="s-item" onclick="show('joins')"><span class="s-num">08</span>JOIN Patterns</div>
+      <div class="s-item" onclick="show('subquery')"><span class="s-num">09</span>Subqueries & EXISTS</div>
+      <div class="s-item" onclick="show('set')"><span class="s-num">10</span>Set Operations</div>
+    </div>
+
+    <div class="s-group">
+      <div class="s-group-label">Data Shaping</div>
+      <div class="s-item" onclick="show('json')"><span class="s-num">11</span>JSON & JSONB Operations</div>
+      <div class="s-item" onclick="show('array')"><span class="s-num">12</span>Arrays & Composite Types</div>
+      <div class="s-item" onclick="show('text')"><span class="s-num">13</span>Text Search & Pattern Match</div>
+      <div class="s-item" onclick="show('datetime')"><span class="s-num">14</span>Date / Time Operations</div>
+    </div>
+
+    <div class="s-group">
+      <div class="s-group-label">Transactions & Control</div>
+      <div class="s-item" onclick="show('txn')"><span class="s-num">15</span>Transactions & Savepoints</div>
+      <div class="s-item" onclick="show('locking')"><span class="s-num">16</span>Explicit Locking Patterns</div>
+      <div class="s-item" onclick="show('upsert')"><span class="s-num">17</span>MERGE / ON CONFLICT</div>
+    </div>
+
+    <div class="s-group">
+      <div class="s-group-label">Advanced Patterns</div>
+      <div class="s-item" onclick="show('pivot')"><span class="s-num">18</span>Pivot, Unpivot & Crosstab</div>
+      <div class="s-item" onclick="show('gaps')"><span class="s-num">19</span>Gaps, Islands & Sequences</div>
+      <div class="s-item" onclick="show('perf')"><span class="s-num">20</span>Performance Query Patterns</div>
+      <div class="s-item" onclick="show('plpgsql')"><span class="s-num">21</span>PL/pgSQL — Functions & Procs</div>
+      <div class="s-item" onclick="show('bulk')"><span class="s-num">22</span>Bulk Ops & Batch Strategies</div>
+    </div>
+
+  </nav>
+  <div class="s-footer">PostgreSQL 14/15 · AlloyDB compatible</div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">DBA + Developer Reference</div>
+  <div class="hero-h">The Complete<br><em>SQL Query</em><br>Arsenal</div>
+  <div class="hero-sub">Every DML pattern, analytical query, and advanced technique a data-heavy application demands — from single-row operations to billion-row aggregations.</div>
+  <div class="pill-row">
+    <span class="pill">SELECT patterns</span>
+    <span class="pill">UPSERT / MERGE</span>
+    <span class="pill">Window Functions</span>
+    <span class="pill">Recursive CTEs</span>
+    <span class="pill">JSONB</span>
+    <span class="pill">Full-Text Search</span>
+    <span class="pill">PL/pgSQL</span>
+    <span class="pill">Bulk Ops</span>
+    <span class="pill">Locking</span>
+  </div>
+</div>
+
+<!-- ====================================================== -->
+<!-- 01 SELECT -->
+<!-- ====================================================== -->
+<section id="select" class="sec active">
+  <div class="sec-header">
+    <div class="sec-num">01 / SELECT</div>
+    <div class="sec-title">SELECT — Advanced Patterns</div>
+    <div class="sec-desc">Beyond basic reads: filtering mastery, projections, conditional logic, pagination, and sampling.</div>
+  </div>
+
+  <h2>Conditional Column Logic <span class="tag2 tag2-b">CASE WHEN</span></h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Conditional expressions</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- CASE as computed column</span>
+<span class="kw">SELECT</span>
+  id,
+  email,
+  <span class="kw">CASE</span>
+    <span class="kw">WHEN</span> plan = <span class="str">'enterprise'</span> <span class="kw">THEN</span> <span class="str">'ENT'</span>
+    <span class="kw">WHEN</span> plan = <span class="str">'pro'</span>        <span class="kw">THEN</span> <span class="str">'PRO'</span>
+    <span class="kw">ELSE</span>                          <span class="str">'FREE'</span>
+  <span class="kw">END</span>                        <span class="kw">AS</span> plan_code,
+
+  <span class="cm">-- Inline conditional aggregate (very useful)</span>
+  <span class="fn">SUM</span>(<span class="kw">CASE</span> <span class="kw">WHEN</span> status = <span class="str">'paid'</span> <span class="kw">THEN</span> amount <span class="kw">ELSE</span> <span class="num">0</span> <span class="kw">END</span>) <span class="kw">AS</span> paid_total,
+  <span class="fn">COUNT</span>(<span class="kw">CASE</span> <span class="kw">WHEN</span> status = <span class="str">'failed'</span> <span class="kw">THEN</span> <span class="num">1</span> <span class="kw">END</span>)       <span class="kw">AS</span> failed_count,
+
+  <span class="cm">-- FILTER (cleaner syntax for PG12+)</span>
+  <span class="fn">COUNT</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> status = <span class="str">'active'</span>)          <span class="kw">AS</span> active_count,
+  <span class="fn">SUM</span>(amount) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> created_at >= <span class="str">'2024-01-01'</span>) <span class="kw">AS</span> ytd_revenue,
+
+  <span class="cm">-- NULLIF / COALESCE / GREATEST</span>
+  <span class="fn">COALESCE</span>(phone, mobile, <span class="str">'N/A'</span>)                       <span class="kw">AS</span> contact,
+  <span class="fn">NULLIF</span>(discount, <span class="num">0</span>)                                  <span class="kw">AS</span> discount_if_any,
+  <span class="fn">GREATEST</span>(score_a, score_b, score_c)                   <span class="kw">AS</span> best_score
+
+<span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> deleted_at <span class="kw">IS NULL</span>;</pre></div>
+
+  <h2>Keyset Pagination <span class="tag2 tag2-g">PRODUCTION PATTERN</span></h2>
+  <p>OFFSET-based pagination degrades O(n). Keyset (cursor) pagination is O(1) and the only correct choice for large datasets.</p>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Keyset vs OFFSET</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- ❌ NEVER in production for large tables (scans all prior rows)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">orders</span> <span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">20</span> <span class="kw">OFFSET</span> <span class="num">100000</span>;   <span class="cm">-- reads 100,020 rows to return 20!</span>
+
+<span class="cm">-- ✅ Keyset / cursor pagination (requires index on sort key)</span>
+<span class="cm">-- Page 1: no cursor</span>
+<span class="kw">SELECT</span> id, created_at, amount <span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">WHERE</span> deleted_at <span class="kw">IS NULL</span>
+<span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span>, id <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">20</span>;
+
+<span class="cm">-- Next page: pass last row's (created_at, id) as cursor</span>
+<span class="kw">SELECT</span> id, created_at, amount <span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">WHERE</span> deleted_at <span class="kw">IS NULL</span>
+  <span class="kw">AND</span> (created_at, id) <span class="op">&lt;</span> (<span class="param">$1</span>, <span class="param">$2</span>)  <span class="cm">-- row-value comparison</span>
+<span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span>, id <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">20</span>;
+<span class="cm">-- Requires: CREATE INDEX ON orders (created_at DESC, id DESC)</span></pre></div>
+
+  <h2>Sampling & Random Selection</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Efficient sampling</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- ❌ Slow: scans entire table and sorts random</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">ORDER BY</span> <span class="fn">RANDOM</span>() <span class="kw">LIMIT</span> <span class="num">100</span>;
+
+<span class="cm">-- ✅ TABLESAMPLE — block-level, very fast (approximate)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">TABLESAMPLE</span> BERNOULLI(<span class="num">1</span>);  <span class="cm">-- ~1% random rows</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">TABLESAMPLE</span> SYSTEM(<span class="num">0.1</span>);   <span class="cm">-- ~0.1% by block</span>
+
+<span class="cm">-- ✅ Fast exact-N random sample (for smallish N)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> id <span class="op">IN</span> (
+  <span class="kw">SELECT</span> id <span class="kw">FROM</span> <span class="tbl">users</span>
+  <span class="kw">ORDER BY</span> <span class="fn">RANDOM</span>() <span class="kw">LIMIT</span> <span class="num">500</span>
+);
+
+<span class="cm">-- ✅ Reservoir pattern for consistent random (reproducible)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> (<span class="fn">hashtext</span>(id::text) &amp; <span class="num">2147483647</span>) <span class="op">&lt;</span> <span class="num">214748364</span>  <span class="cm">-- ~10% deterministic</span>
+<span class="kw">LIMIT</span> <span class="num">1000</span>;</pre></div>
+
+  <h2>DISTINCT ON — Per-Group Latest Row</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Latest record per group</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Get the latest order per user (PostgreSQL DISTINCT ON)</span>
+<span class="kw">SELECT DISTINCT ON</span> (user_id)
+  user_id, id <span class="kw">AS</span> order_id, status, amount, created_at
+<span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">ORDER BY</span> user_id, created_at <span class="kw">DESC</span>;  <span class="cm">-- DISTINCT ON col must be leftmost in ORDER BY</span>
+
+<span class="cm">-- Equivalent with ROW_NUMBER (more portable, sometimes faster)</span>
+<span class="kw">SELECT</span> user_id, order_id, status, amount, created_at
+<span class="kw">FROM</span> (
+  <span class="kw">SELECT</span> *,
+    <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> user_id <span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span>) <span class="kw">AS</span> rn
+  <span class="kw">FROM</span> <span class="tbl">orders</span>
+) ranked
+<span class="kw">WHERE</span> rn = <span class="num">1</span>;</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 02 INSERT -->
+<!-- ====================================================== -->
+<section id="insert" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">02 / INSERT</div>
+    <div class="sec-title">INSERT — Bulk & Upsert</div>
+    <div class="sec-desc">Single-row, bulk, from-select, returning values, and copy-based mass loading.</div>
+  </div>
+
+  <h2>INSERT Variants</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">All insert forms</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Single row</span>
+<span class="kw">INSERT INTO</span> <span class="tbl">users</span> (email, plan, created_at)
+<span class="kw">VALUES</span> (<span class="str">'alice@co.com'</span>, <span class="str">'pro'</span>, <span class="fn">NOW</span>())
+<span class="kw">RETURNING</span> id, created_at;  <span class="cm">-- get generated values back</span>
+
+<span class="cm">-- Multi-row (one statement = one WAL record = faster)</span>
+<span class="kw">INSERT INTO</span> <span class="tbl">users</span> (email, plan) <span class="kw">VALUES</span>
+  (<span class="str">'b@co.com'</span>, <span class="str">'free'</span>),
+  (<span class="str">'c@co.com'</span>, <span class="str">'pro'</span>),
+  (<span class="str">'d@co.com'</span>, <span class="str">'enterprise'</span>)
+<span class="kw">RETURNING</span> *;
+
+<span class="cm">-- INSERT ... SELECT (from another table / query)</span>
+<span class="kw">INSERT INTO</span> <span class="tbl">archived_orders</span> (id, user_id, amount, created_at)
+<span class="kw">SELECT</span> id, user_id, amount, created_at
+<span class="kw">FROM</span>   <span class="tbl">orders</span>
+<span class="kw">WHERE</span>  created_at <span class="op">&lt;</span> <span class="fn">NOW</span>() - <span class="kw">interval</span> <span class="str">'2 years'</span>
+  <span class="kw">AND</span>  status = <span class="str">'completed'</span>;
+
+<span class="cm">-- Generate test data (useful for load testing)</span>
+<span class="kw">INSERT INTO</span> <span class="tbl">events</span> (user_id, event_type, payload, occurred_at)
+<span class="kw">SELECT</span>
+  (<span class="fn">RANDOM</span>() * <span class="num">10000</span>)::INT + <span class="num">1</span>               <span class="kw">AS</span> user_id,
+  (<span class="kw">ARRAY</span>[<span class="str">'click'</span>,<span class="str">'view'</span>,<span class="str">'purchase'</span>,<span class="str">'logout'</span>])[<span class="fn">CEIL</span>(<span class="fn">RANDOM</span>()*<span class="num">4</span>)::INT] <span class="kw">AS</span> event_type,
+  <span class="fn">jsonb_build_object</span>(<span class="str">'page'</span>, <span class="fn">CHR</span>(<span class="fn">FLOOR</span>(<span class="fn">RANDOM</span>()*<span class="num">26</span>)::INT+<span class="num">65</span>))    <span class="kw">AS</span> payload,
+  <span class="fn">NOW</span>() - (<span class="fn">RANDOM</span>() * <span class="kw">interval</span> <span class="str">'90 days'</span>)   <span class="kw">AS</span> occurred_at
+<span class="kw">FROM</span> <span class="fn">generate_series</span>(<span class="num">1</span>, <span class="num">1000000</span>) s;  <span class="cm">-- 1M rows</span></pre></div>
+
+  <h2>COPY — Fastest Bulk Load <span class="tag2 tag2-r">FASTEST</span></h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">COPY for mass data loading</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Load from CSV file (server-side path)</span>
+<span class="kw">COPY</span> <span class="tbl">orders</span> (id, user_id, amount, status, created_at)
+<span class="kw">FROM</span> <span class="str">'/data/orders_2024.csv'</span>
+<span class="kw">WITH</span> (FORMAT csv, HEADER true, DELIMITER <span class="str">','</span>, NULL <span class="str">''</span>);
+
+<span class="cm">-- \COPY (client-side, via psql) — no superuser required</span>
+\copy <span class="tbl">orders</span> <span class="kw">FROM</span> <span class="str">'./orders.csv'</span> <span class="kw">WITH</span> (FORMAT csv, HEADER);
+
+<span class="cm">-- Export to CSV</span>
+<span class="kw">COPY</span> (<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">orders</span> <span class="kw">WHERE</span> status=<span class="str">'completed'</span>)
+<span class="kw">TO</span> <span class="str">'/tmp/completed_orders.csv'</span>
+<span class="kw">WITH</span> (FORMAT csv, HEADER true);
+
+<span class="cm">-- Binary format (2-3x faster than CSV for large datasets)</span>
+<span class="kw">COPY</span> <span class="tbl">orders</span> <span class="kw">FROM</span> <span class="str">'/data/orders.bin'</span> <span class="kw">WITH</span> (FORMAT binary);</pre></div>
+
+  <div class="note note-tip"><strong>Performance tip:</strong> For bulk inserts, disable indexes and constraints, COPY data, then rebuild. <code>ALTER TABLE orders DISABLE TRIGGER ALL;</code> before and re-enable after. For alloydb, wrap in a single transaction for WAL efficiency.</div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 03 UPDATE -->
+<!-- ====================================================== -->
+<section id="update" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">03 / UPDATE</div>
+    <div class="sec-title">UPDATE — Safe & Conditional</div>
+    <div class="sec-desc">From-clause joins, conditional updates, safe batch updates, and RETURNING for audit trails.</div>
+  </div>
+
+  <h2>UPDATE ... FROM (join-based update)</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Join-based UPDATE</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Update orders with user plan from users table</span>
+<span class="kw">UPDATE</span> <span class="tbl">orders</span> o
+<span class="kw">SET</span>
+  discount_pct = <span class="kw">CASE</span>
+    <span class="kw">WHEN</span> u.plan = <span class="str">'enterprise'</span> <span class="kw">THEN</span> <span class="num">20</span>
+    <span class="kw">WHEN</span> u.plan = <span class="str">'pro'</span>        <span class="kw">THEN</span> <span class="num">10</span>
+    <span class="kw">ELSE</span> <span class="num">0</span>
+  <span class="kw">END</span>,
+  updated_at = <span class="fn">NOW</span>()
+<span class="kw">FROM</span> <span class="tbl">users</span> u
+<span class="kw">WHERE</span> o.user_id = u.id
+  <span class="kw">AND</span> o.discount_pct <span class="kw">IS NULL</span>   <span class="cm">-- only unset ones</span>
+  <span class="kw">AND</span> o.status = <span class="str">'pending'</span>
+<span class="kw">RETURNING</span> o.id, o.discount_pct, u.email;</pre></div>
+
+  <h2>Safe Batch UPDATE (avoid table lock)</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Chunk-based update — DO NOT update millions at once</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Update 10M rows safely in batches (avoid WAL surge + lock pile)</span>
+<span class="kw">DO</span> $$
+<span class="kw">DECLARE</span>
+  updated_count INT;
+  batch_size    INT := <span class="num">10000</span>;
+  total         INT := <span class="num">0</span>;
+<span class="kw">BEGIN</span>
+  <span class="kw">LOOP</span>
+    <span class="kw">WITH</span> <span class="tbl">batch</span> <span class="kw">AS</span> (
+      <span class="kw">SELECT</span> id <span class="kw">FROM</span> <span class="tbl">orders</span>
+      <span class="kw">WHERE</span> status = <span class="str">'pending'</span>
+        <span class="kw">AND</span> created_at <span class="op">&lt;</span> <span class="fn">NOW</span>() - <span class="kw">INTERVAL</span> <span class="str">'30 days'</span>
+      <span class="kw">LIMIT</span> batch_size
+      <span class="kw">FOR UPDATE SKIP LOCKED</span>   <span class="cm">-- skip rows locked by concurrent workers</span>
+    )
+    <span class="kw">UPDATE</span> <span class="tbl">orders</span> <span class="kw">SET</span>
+      status = <span class="str">'expired'</span>,
+      updated_at = <span class="fn">NOW</span>()
+    <span class="kw">WHERE</span> id <span class="kw">IN</span> (<span class="kw">SELECT</span> id <span class="kw">FROM</span> <span class="tbl">batch</span>);
+
+    GET DIAGNOSTICS updated_count = ROW_COUNT;
+    total := total + updated_count;
+
+    <span class="kw">EXIT WHEN</span> updated_count = <span class="num">0</span>;
+
+    <span class="fn">RAISE NOTICE</span> <span class="str">'Updated % rows (total: %)'</span>, updated_count, total;
+    <span class="fn">PERFORM</span> <span class="fn">pg_sleep</span>(<span class="num">0.05</span>);  <span class="cm">-- breathing room for other queries</span>
+  <span class="kw">END LOOP</span>;
+
+  <span class="fn">RAISE NOTICE</span> <span class="str">'Done. Total updated: %'</span>, total;
+<span class="kw">END</span>;
+$$;</pre></div>
+
+  <h2>Optimistic Locking Pattern</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Version-based conflict detection</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Schema: orders has a version INT column</span>
+<span class="cm">-- App reads row with version=5, sends back version=5 on update</span>
+<span class="kw">UPDATE</span> <span class="tbl">orders</span>
+<span class="kw">SET</span>
+  status    = <span class="param">$1</span>,
+  version   = version + <span class="num">1</span>,
+  updated_at = <span class="fn">NOW</span>()
+<span class="kw">WHERE</span> id      = <span class="param">$2</span>
+  <span class="kw">AND</span> version = <span class="param">$3</span>   <span class="cm">-- fails silently if another write happened</span>
+<span class="kw">RETURNING</span> id, version;
+
+<span class="cm">-- If RETURNING returns 0 rows → conflict → app must retry</span></pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 04 DELETE -->
+<!-- ====================================================== -->
+<section id="delete" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">04 / DELETE</div>
+    <div class="sec-title">DELETE & TRUNCATE</div>
+    <div class="sec-desc">Safe deletions, cascades, soft deletes, and high-speed truncations.</div>
+  </div>
+
+  <h2>DELETE Patterns</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Delete variants</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Basic with RETURNING (always confirm what was deleted)</span>
+<span class="kw">DELETE FROM</span> <span class="tbl">sessions</span>
+<span class="kw">WHERE</span> expires_at <span class="op">&lt;</span> <span class="fn">NOW</span>()
+<span class="kw">RETURNING</span> id, user_id, expires_at;
+
+<span class="cm">-- DELETE via JOIN (using USING clause)</span>
+<span class="kw">DELETE FROM</span> <span class="tbl">orders</span> o
+<span class="kw">USING</span> <span class="tbl">users</span> u
+<span class="kw">WHERE</span> o.user_id = u.id
+  <span class="kw">AND</span> u.status = <span class="str">'banned'</span>
+  <span class="kw">AND</span> o.status  = <span class="str">'pending'</span>
+<span class="kw">RETURNING</span> o.id, u.email;
+
+<span class="cm">-- Soft delete (recommended — preserves audit history)</span>
+<span class="kw">UPDATE</span> <span class="tbl">users</span>
+<span class="kw">SET</span>
+  deleted_at    = <span class="fn">NOW</span>(),
+  deleted_by    = <span class="fn">CURRENT_USER</span>,
+  email         = email || <span class="str">'_deleted_'</span> || id  <span class="cm">-- prevent unique constraint block</span>
+<span class="kw">WHERE</span> id = <span class="param">$1</span>
+  <span class="kw">AND</span> deleted_at <span class="kw">IS NULL</span>;
+
+<span class="cm">-- Batch delete with CTE (safe — preview before deleting)</span>
+<span class="kw">WITH</span> <span class="tbl">to_delete</span> <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> id <span class="kw">FROM</span> <span class="tbl">events</span>
+  <span class="kw">WHERE</span>  occurred_at <span class="op">&lt;</span> <span class="fn">NOW</span>() - <span class="kw">interval</span> <span class="str">'1 year'</span>
+  <span class="kw">LIMIT</span>  <span class="num">50000</span>
+)
+<span class="kw">DELETE FROM</span> <span class="tbl">events</span>
+<span class="kw">WHERE</span> id <span class="kw">IN</span> (<span class="kw">SELECT</span> id <span class="kw">FROM</span> <span class="tbl">to_delete</span>)
+<span class="kw">RETURNING</span> id;</pre></div>
+
+  <h2>TRUNCATE — Nuclear Option</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">TRUNCATE variants</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Instant: resets table to empty (no per-row WAL, no vacuum needed)</span>
+<span class="kw">TRUNCATE</span> <span class="tbl">events</span>;
+
+<span class="cm">-- Cascade (also empties child tables with FK references)</span>
+<span class="kw">TRUNCATE</span> <span class="tbl">users</span> <span class="kw">CASCADE</span>;
+
+<span class="cm">-- Reset sequence too (auto-increment back to 1)</span>
+<span class="kw">TRUNCATE</span> <span class="tbl">orders</span> <span class="kw">RESTART IDENTITY CASCADE</span>;
+
+<span class="cm">-- Truncate multiple tables in one statement (atomic)</span>
+<span class="kw">TRUNCATE</span> <span class="tbl">staging_orders</span>, <span class="tbl">staging_events</span>, <span class="tbl">staging_users</span>
+<span class="kw">RESTART IDENTITY</span>;</pre></div>
+
+  <div class="note note-danger"><strong>TRUNCATE is DDL, not DML</strong> — it acquires an ACCESS EXCLUSIVE lock (blocks everything). It IS transactional in PostgreSQL (unlike MySQL), but CANNOT be rolled back after COMMIT. Use <code>DELETE</code> if you need RETURNING or partial deletion.</div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 05 AGGREGATES -->
+<!-- ====================================================== -->
+<section id="agg" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">05 / AGG</div>
+    <div class="sec-title">GROUP BY & Aggregates</div>
+    <div class="sec-desc">Standard and advanced aggregation — GROUPING SETS, ROLLUP, CUBE, ordered-set and hypothetical aggregates.</div>
+  </div>
+
+  <h2>Advanced GROUP BY <span class="tag2 tag2-b">ROLLUP / CUBE</span></h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Multi-dimensional aggregation</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- ROLLUP: subtotals + grand total (hierarchical)</span>
+<span class="kw">SELECT</span>
+  <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, created_at) <span class="kw">AS</span> month,
+  region,
+  plan,
+  <span class="fn">SUM</span>(amount)                      <span class="kw">AS</span> revenue,
+  <span class="fn">COUNT</span>(*)                         <span class="kw">AS</span> orders
+<span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">WHERE</span> status = <span class="str">'completed'</span>
+<span class="kw">GROUP BY ROLLUP</span> (
+  <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, created_at),
+  region,
+  plan
+)
+<span class="kw">ORDER BY</span> <span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>;
+<span class="cm">-- Produces: (month, region, plan), (month, region), (month), () grand total</span>
+
+<span class="cm">-- CUBE: all possible dimension combinations</span>
+<span class="kw">SELECT</span> region, plan, channel, <span class="fn">SUM</span>(revenue)
+<span class="kw">FROM</span> <span class="tbl">sales</span>
+<span class="kw">GROUP BY CUBE</span> (region, plan, channel);  <span class="cm">-- 2^3 = 8 groupings</span>
+
+<span class="cm">-- GROUPING SETS: explicit combinations</span>
+<span class="kw">SELECT</span> region, plan, <span class="fn">SUM</span>(revenue)
+<span class="kw">FROM</span> <span class="tbl">sales</span>
+<span class="kw">GROUP BY GROUPING SETS</span> (
+  (region, plan),   <span class="cm">-- by region + plan</span>
+  (region),         <span class="cm">-- by region only</span>
+  ()                <span class="cm">-- grand total</span>
+);
+
+<span class="cm">-- GROUPING() function: detect which columns are subtotal rows</span>
+<span class="kw">SELECT</span>
+  <span class="kw">CASE</span> <span class="kw">WHEN</span> <span class="fn">GROUPING</span>(region) = <span class="num">1</span> <span class="kw">THEN</span> <span class="str">'ALL REGIONS'</span> <span class="kw">ELSE</span> region <span class="kw">END</span>,
+  <span class="kw">CASE</span> <span class="kw">WHEN</span> <span class="fn">GROUPING</span>(plan)   = <span class="num">1</span> <span class="kw">THEN</span> <span class="str">'ALL PLANS'</span>   <span class="kw">ELSE</span> plan   <span class="kw">END</span>,
+  <span class="fn">SUM</span>(revenue)
+<span class="kw">FROM</span> <span class="tbl">sales</span>
+<span class="kw">GROUP BY ROLLUP</span> (region, plan);</pre></div>
+
+  <h2>Ordered-Set & Percentile Aggregates</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Statistical aggregates</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="kw">SELECT</span>
+  plan,
+  <span class="fn">COUNT</span>(*)                                          <span class="kw">AS</span> total_orders,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(amount), <span class="num">2</span>)                           <span class="kw">AS</span> avg_amount,
+  <span class="fn">PERCENTILE_CONT</span>(<span class="num">0.5</span>) <span class="kw">WITHIN GROUP</span> (<span class="kw">ORDER BY</span> amount) <span class="kw">AS</span> median,
+  <span class="fn">PERCENTILE_CONT</span>(<span class="num">0.95</span>) <span class="kw">WITHIN GROUP</span> (<span class="kw">ORDER BY</span> amount) <span class="kw">AS</span> p95,
+  <span class="fn">PERCENTILE_DISC</span>(<span class="num">0.99</span>) <span class="kw">WITHIN GROUP</span> (<span class="kw">ORDER BY</span> amount) <span class="kw">AS</span> p99,
+  <span class="fn">MODE</span>() <span class="kw">WITHIN GROUP</span> (<span class="kw">ORDER BY</span> status)            <span class="kw">AS</span> most_common_status,
+  <span class="fn">STDDEV_POP</span>(amount)                                <span class="kw">AS</span> std_dev,
+  <span class="fn">CORR</span>(amount, item_count)                          <span class="kw">AS</span> amount_items_correlation
+<span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">GROUP BY</span> plan;
+
+<span class="cm">-- String aggregation</span>
+<span class="kw">SELECT</span>
+  user_id,
+  <span class="fn">STRING_AGG</span>(tag, <span class="str">', '</span> <span class="kw">ORDER BY</span> tag)    <span class="kw">AS</span> tags_csv,
+  <span class="fn">ARRAY_AGG</span>(tag <span class="kw">ORDER BY</span> created_at)   <span class="kw">AS</span> tags_array,
+  <span class="fn">JSONB_AGG</span>(<span class="fn">JSONB_BUILD_OBJECT</span>(<span class="str">'id'</span>, id, <span class="str">'tag'</span>, tag)) <span class="kw">AS</span> tags_json
+<span class="kw">FROM</span> <span class="tbl">user_tags</span>
+<span class="kw">GROUP BY</span> user_id;</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 06 WINDOW FUNCTIONS -->
+<!-- ====================================================== -->
+<section id="window" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">06 / WINDOW</div>
+    <div class="sec-title">Window Functions</div>
+    <div class="sec-desc">The most powerful SQL feature for analytical work. Running totals, rankings, moving averages, lead/lag comparisons.</div>
+  </div>
+
+  <h2>Ranking Functions</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">ROW_NUMBER, RANK, DENSE_RANK, NTILE</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="kw">SELECT</span>
+  id, user_id, amount, created_at,
+
+  <span class="cm">-- Unique sequential number per partition</span>
+  <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> user_id <span class="kw">ORDER BY</span> created_at)   <span class="kw">AS</span> row_num,
+
+  <span class="cm">-- Rank with gaps on tie (1,1,3...)</span>
+  <span class="fn">RANK</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> user_id <span class="kw">ORDER BY</span> amount <span class="kw">DESC</span>)       <span class="kw">AS</span> rank,
+
+  <span class="cm">-- Rank without gaps (1,1,2...)</span>
+  <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> user_id <span class="kw">ORDER BY</span> amount <span class="kw">DESC</span>) <span class="kw">AS</span> dense_rank,
+
+  <span class="cm">-- Bucket into N groups (e.g., quartiles)</span>
+  <span class="fn">NTILE</span>(<span class="num">4</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> amount <span class="kw">DESC</span>)                          <span class="kw">AS</span> quartile,
+
+  <span class="cm">-- Relative position 0.0–1.0</span>
+  <span class="fn">PERCENT_RANK</span>() <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> amount)                         <span class="kw">AS</span> pct_rank,
+  <span class="fn">CUME_DIST</span>() <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> amount)                            <span class="kw">AS</span> cume_dist
+
+<span class="kw">FROM</span> <span class="tbl">orders</span>;</pre></div>
+
+  <h2>LAG / LEAD — Period-over-Period Comparison</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">MoM growth, previous/next values</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="kw">WITH</span> <span class="tbl">monthly</span> <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>
+    <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, created_at) <span class="kw">AS</span> month,
+    <span class="fn">SUM</span>(amount)                      <span class="kw">AS</span> revenue,
+    <span class="fn">COUNT</span>(*)                         <span class="kw">AS</span> orders
+  <span class="kw">FROM</span> <span class="tbl">orders</span>
+  <span class="kw">WHERE</span> status = <span class="str">'completed'</span>
+  <span class="kw">GROUP BY</span> <span class="num">1</span>
+)
+<span class="kw">SELECT</span>
+  month,
+  revenue,
+  orders,
+
+  <span class="cm">-- Previous month's revenue</span>
+  <span class="fn">LAG</span>(revenue, <span class="num">1</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month) <span class="kw">AS</span> prev_month_rev,
+
+  <span class="cm">-- MoM % growth</span>
+  <span class="fn">ROUND</span>(
+    <span class="num">100.0</span> * (revenue - <span class="fn">LAG</span>(revenue, <span class="num">1</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month))
+    / <span class="fn">NULLIF</span>(<span class="fn">LAG</span>(revenue, <span class="num">1</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month), <span class="num">0</span>),
+  <span class="num">2</span>) <span class="kw">AS</span> mom_growth_pct,
+
+  <span class="cm">-- YoY (12 months back)</span>
+  <span class="fn">LAG</span>(revenue, <span class="num">12</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month) <span class="kw">AS</span> same_month_last_year,
+
+  <span class="cm">-- Next month (lookahead)</span>
+  <span class="fn">LEAD</span>(revenue, <span class="num">1</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month) <span class="kw">AS</span> next_month_rev
+
+<span class="kw">FROM</span> <span class="tbl">monthly</span>
+<span class="kw">ORDER BY</span> month;</pre></div>
+
+  <h2>Running Totals & Moving Averages</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Frame specification — ROWS BETWEEN</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="kw">SELECT</span>
+  day,
+  daily_revenue,
+
+  <span class="cm">-- Cumulative total (running sum)</span>
+  <span class="fn">SUM</span>(daily_revenue)
+    <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> day <span class="kw">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>)
+    <span class="kw">AS</span> cumulative_revenue,
+
+  <span class="cm">-- 7-day moving average</span>
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(daily_revenue)
+    <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> day <span class="kw">ROWS BETWEEN</span> <span class="num">6</span> <span class="kw">PRECEDING AND CURRENT ROW</span>), <span class="num">2</span>)
+    <span class="kw">AS</span> moving_avg_7d,
+
+  <span class="cm">-- 30-day moving sum</span>
+  <span class="fn">SUM</span>(daily_revenue)
+    <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> day <span class="kw">ROWS BETWEEN</span> <span class="num">29</span> <span class="kw">PRECEDING AND CURRENT ROW</span>)
+    <span class="kw">AS</span> rolling_30d_revenue,
+
+  <span class="cm">-- Running max</span>
+  <span class="fn">MAX</span>(daily_revenue)
+    <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> day <span class="kw">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>)
+    <span class="kw">AS</span> all_time_high
+
+<span class="kw">FROM</span> <span class="tbl">daily_revenue_summary</span>
+<span class="kw">ORDER BY</span> day;</pre></div>
+
+  <h2>FIRST_VALUE / LAST_VALUE / NTH_VALUE</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Value at frame boundary</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="kw">SELECT</span>
+  user_id, order_id, amount, created_at,
+
+  <span class="cm">-- First order amount for this user</span>
+  <span class="fn">FIRST_VALUE</span>(amount)
+    <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> user_id <span class="kw">ORDER BY</span> created_at
+          <span class="kw">ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</span>)
+    <span class="kw">AS</span> first_order_amount,
+
+  <span class="cm">-- Most recent order amount</span>
+  <span class="fn">LAST_VALUE</span>(amount)
+    <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> user_id <span class="kw">ORDER BY</span> created_at
+          <span class="kw">ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</span>)
+    <span class="kw">AS</span> latest_order_amount,
+
+  <span class="cm">-- Second order (useful for cohort analysis)</span>
+  <span class="fn">NTH_VALUE</span>(amount, <span class="num">2</span>)
+    <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> user_id <span class="kw">ORDER BY</span> created_at
+          <span class="kw">ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</span>)
+    <span class="kw">AS</span> second_order_amount
+
+<span class="kw">FROM</span> <span class="tbl">orders</span>;</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 07 CTEs -->
+<!-- ====================================================== -->
+<section id="cte" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">07 / CTE</div>
+    <div class="sec-title">CTEs & Recursive Queries</div>
+    <div class="sec-desc">Readable multi-step queries, data pipelines in SQL, and recursive tree/graph traversal.</div>
+  </div>
+
+  <h2>Chained CTEs — SQL Data Pipeline</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Multi-step analytical pipeline</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="kw">WITH</span>
+<span class="cm">-- Step 1: filter valid orders</span>
+<span class="tbl">valid_orders</span> <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">orders</span>
+  <span class="kw">WHERE</span> status = <span class="str">'completed'</span>
+    <span class="kw">AND</span> created_at >= <span class="str">'2024-01-01'</span>
+    <span class="kw">AND</span> amount > <span class="num">0</span>
+),
+<span class="cm">-- Step 2: enrich with user data</span>
+<span class="tbl">enriched</span> <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>
+    o.*,
+    u.plan,
+    u.country,
+    u.signup_date
+  <span class="kw">FROM</span> <span class="tbl">valid_orders</span> o
+  <span class="kw">JOIN</span> <span class="tbl">users</span> u <span class="kw">ON</span> u.id = o.user_id
+),
+<span class="cm">-- Step 3: segment users</span>
+<span class="tbl">segmented</span> <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>
+    *,
+    <span class="kw">CASE</span>
+      <span class="kw">WHEN</span> amount >= <span class="num">1000</span> <span class="kw">THEN</span> <span class="str">'whale'</span>
+      <span class="kw">WHEN</span> amount >= <span class="num">100</span>  <span class="kw">THEN</span> <span class="str">'mid'</span>
+      <span class="kw">ELSE</span>                     <span class="str">'small'</span>
+    <span class="kw">END</span> <span class="kw">AS</span> segment
+  <span class="kw">FROM</span> <span class="tbl">enriched</span>
+),
+<span class="cm">-- Step 4: final aggregation</span>
+<span class="tbl">summary</span> <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>
+    country, plan, segment,
+    <span class="fn">COUNT</span>(*) <span class="kw">AS</span> orders,
+    <span class="fn">SUM</span>(amount) <span class="kw">AS</span> revenue,
+    <span class="fn">ROUND</span>(<span class="fn">AVG</span>(amount), <span class="num">2</span>) <span class="kw">AS</span> avg_order
+  <span class="kw">FROM</span> <span class="tbl">segmented</span>
+  <span class="kw">GROUP BY</span> country, plan, segment
+)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">summary</span>
+<span class="kw">ORDER BY</span> revenue <span class="kw">DESC</span>;</pre></div>
+
+  <h2>Recursive CTEs — Trees & Graphs</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Org chart / category hierarchy traversal</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Table: employees(id, name, manager_id, department)</span>
+
+<span class="cm">-- Full org tree from CEO down</span>
+<span class="kw">WITH RECURSIVE</span> <span class="tbl">org_tree</span> <span class="kw">AS</span> (
+  <span class="cm">-- Anchor: root node (no manager)</span>
+  <span class="kw">SELECT</span>
+    id, name, manager_id, department,
+    <span class="num">0</span>            <span class="kw">AS</span> depth,
+    name::TEXT   <span class="kw">AS</span> path
+  <span class="kw">FROM</span> <span class="tbl">employees</span>
+  <span class="kw">WHERE</span> manager_id <span class="kw">IS NULL</span>
+
+  <span class="kw">UNION ALL</span>
+
+  <span class="cm">-- Recursive: join children</span>
+  <span class="kw">SELECT</span>
+    e.id, e.name, e.manager_id, e.department,
+    t.depth + <span class="num">1</span>,
+    t.path || <span class="str">' → '</span> || e.name
+  <span class="kw">FROM</span> <span class="tbl">employees</span> e
+  <span class="kw">JOIN</span> <span class="tbl">org_tree</span> t <span class="kw">ON</span> t.id = e.manager_id
+  <span class="kw">WHERE</span> t.depth <span class="op">&lt;</span> <span class="num">10</span>   <span class="cm">-- cycle guard</span>
+)
+<span class="kw">SELECT</span>
+  <span class="fn">REPEAT</span>(<span class="str">'  '</span>, depth) || name <span class="kw">AS</span> tree_view,
+  depth, department, path
+<span class="kw">FROM</span> <span class="tbl">org_tree</span>
+<span class="kw">ORDER BY</span> path;
+
+<span class="cm">-- Find all ancestors of an employee (bottom-up)</span>
+<span class="kw">WITH RECURSIVE</span> <span class="tbl">ancestors</span> <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> id, name, manager_id, <span class="num">0</span> <span class="kw">AS</span> level
+  <span class="kw">FROM</span> <span class="tbl">employees</span> <span class="kw">WHERE</span> id = <span class="param">$1</span>
+
+  <span class="kw">UNION ALL</span>
+
+  <span class="kw">SELECT</span> e.id, e.name, e.manager_id, a.level + <span class="num">1</span>
+  <span class="kw">FROM</span> <span class="tbl">employees</span> e
+  <span class="kw">JOIN</span> <span class="tbl">ancestors</span> a <span class="kw">ON</span> a.manager_id = e.id
+)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">ancestors</span> <span class="kw">ORDER BY</span> level;</pre></div>
+
+  <h2>Writeable CTEs — DML in CTEs</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">INSERT + UPDATE in one statement</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Archive-and-delete in a single atomic statement</span>
+<span class="kw">WITH</span> <span class="tbl">moved</span> <span class="kw">AS</span> (
+  <span class="kw">DELETE FROM</span> <span class="tbl">orders</span>
+  <span class="kw">WHERE</span> created_at <span class="op">&lt;</span> <span class="fn">NOW</span>() - <span class="kw">INTERVAL</span> <span class="str">'2 years'</span>
+    <span class="kw">AND</span> status = <span class="str">'completed'</span>
+  <span class="kw">RETURNING</span> *
+)
+<span class="kw">INSERT INTO</span> <span class="tbl">orders_archive</span>
+<span class="kw">SELECT</span> *, <span class="fn">NOW</span>() <span class="kw">AS</span> archived_at
+<span class="kw">FROM</span> <span class="tbl">moved</span>;
+<span class="cm">-- All or nothing — no partial archive possible</span></pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 08 JOINS -->
+<!-- ====================================================== -->
+<section id="joins" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">08 / JOIN</div>
+    <div class="sec-title">JOIN Patterns</div>
+    <div class="sec-desc">Every join type with real use cases, anti-joins, self-joins, lateral joins, and performance patterns.</div>
+  </div>
+
+  <h2>Join Type Reference</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">All join types</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- INNER JOIN: only matching rows on both sides</span>
+<span class="kw">SELECT</span> o.id, u.email, o.amount
+<span class="kw">FROM</span> <span class="tbl">orders</span> o <span class="kw">INNER JOIN</span> <span class="tbl">users</span> u <span class="kw">ON</span> u.id = o.user_id;
+
+<span class="cm">-- LEFT JOIN: all orders, user may be NULL (deleted users)</span>
+<span class="kw">SELECT</span> o.id, <span class="fn">COALESCE</span>(u.email, <span class="str">'deleted'</span>) <span class="kw">AS</span> email, o.amount
+<span class="kw">FROM</span> <span class="tbl">orders</span> o <span class="kw">LEFT JOIN</span> <span class="tbl">users</span> u <span class="kw">ON</span> u.id = o.user_id;
+
+<span class="cm">-- ANTI-JOIN: users who have never placed an order</span>
+<span class="kw">SELECT</span> u.id, u.email
+<span class="kw">FROM</span> <span class="tbl">users</span> u
+<span class="kw">LEFT JOIN</span> <span class="tbl">orders</span> o <span class="kw">ON</span> o.user_id = u.id
+<span class="kw">WHERE</span> o.id <span class="kw">IS NULL</span>;    <span class="cm">-- the anti-join trick</span>
+
+<span class="cm">-- SELF-JOIN: compare a table to itself</span>
+<span class="kw">SELECT</span>
+  a.id <span class="kw">AS</span> emp_id, a.name <span class="kw">AS</span> employee,
+  b.name <span class="kw">AS</span> manager
+<span class="kw">FROM</span> <span class="tbl">employees</span> a
+<span class="kw">LEFT JOIN</span> <span class="tbl">employees</span> b <span class="kw">ON</span> b.id = a.manager_id;
+
+<span class="cm">-- CROSS JOIN: cartesian product (use carefully)</span>
+<span class="kw">SELECT</span> c.name, s.name
+<span class="kw">FROM</span> <span class="tbl">colors</span> c <span class="kw">CROSS JOIN</span> <span class="tbl">sizes</span> s;  <span class="cm">-- all combinations</span></pre></div>
+
+  <h2>LATERAL JOIN — Correlated Subquery as Table</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">LATERAL — top-N per group with join</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Top 3 orders per user (efficient with LATERAL)</span>
+<span class="kw">SELECT</span> u.id, u.email, o.id <span class="kw">AS</span> order_id, o.amount
+<span class="kw">FROM</span> <span class="tbl">users</span> u
+<span class="kw">CROSS JOIN LATERAL</span> (
+  <span class="kw">SELECT</span> id, amount
+  <span class="kw">FROM</span>   <span class="tbl">orders</span>
+  <span class="kw">WHERE</span>  user_id = u.id          <span class="cm">-- references outer row</span>
+  <span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span>
+  <span class="kw">LIMIT</span>  <span class="num">3</span>
+) o;
+
+<span class="cm">-- LATERAL with function (e.g., unnest, JSON)</span>
+<span class="kw">SELECT</span> u.id, tag
+<span class="kw">FROM</span> <span class="tbl">users</span> u
+<span class="kw">CROSS JOIN LATERAL</span> <span class="fn">UNNEST</span>(u.tags) <span class="kw">AS</span> t(tag);
+
+<span class="cm">-- LEFT JOIN LATERAL (include users with no orders)</span>
+<span class="kw">SELECT</span> u.email, <span class="fn">COALESCE</span>(o.amount, <span class="num">0</span>) <span class="kw">AS</span> latest_amount
+<span class="kw">FROM</span> <span class="tbl">users</span> u
+<span class="kw">LEFT JOIN LATERAL</span> (
+  <span class="kw">SELECT</span> amount <span class="kw">FROM</span> <span class="tbl">orders</span>
+  <span class="kw">WHERE</span> user_id = u.id
+  <span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span>
+  <span class="kw">LIMIT</span> <span class="num">1</span>
+) o <span class="kw">ON TRUE</span>;</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 09 SUBQUERIES -->
+<!-- ====================================================== -->
+<section id="subquery" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">09 / SUBQUERY</div>
+    <div class="sec-title">Subqueries & EXISTS</div>
+    <div class="sec-desc">Correlated subqueries, EXISTS vs IN performance, scalar subqueries, and derived tables.</div>
+  </div>
+
+  <h2>EXISTS vs IN — Know the Difference</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">EXISTS (use this), IN (careful with NULLs)</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- IN: fine for small, static lists; NULL in subquery = silent miss</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> id <span class="kw">IN</span> (<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>);
+
+<span class="cm">-- ⚠️ IN with subquery + NULLs: if subquery returns any NULL,</span>
+<span class="cm">--    rows NOT matching return unknown (not false) → rows disappear!</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">WHERE</span> user_id <span class="op">NOT IN</span> (<span class="kw">SELECT</span> id <span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">WHERE</span> plan=<span class="str">'free'</span>);
+<span class="cm">-- DANGER: if users has NULL ids, this returns 0 rows!</span>
+
+<span class="cm">-- ✅ EXISTS: stops on first match, handles NULLs correctly, fast</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span> u
+<span class="kw">WHERE EXISTS</span> (
+  <span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> <span class="tbl">orders</span> o
+  <span class="kw">WHERE</span> o.user_id = u.id
+    <span class="kw">AND</span> o.status = <span class="str">'completed'</span>
+    <span class="kw">AND</span> o.amount > <span class="num">500</span>
+);
+
+<span class="cm">-- NOT EXISTS (safe anti-join alternative)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">users</span> u
+<span class="kw">WHERE NOT EXISTS</span> (
+  <span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> <span class="tbl">orders</span> o
+  <span class="kw">WHERE</span> o.user_id = u.id
+);</pre></div>
+
+  <h2>Scalar Subqueries & Correlated</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Per-row computed values</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="kw">SELECT</span>
+  u.id, u.email,
+  <span class="cm">-- Scalar subquery: 1 value per user row</span>
+  (<span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> <span class="tbl">orders</span> o <span class="kw">WHERE</span> o.user_id = u.id) <span class="kw">AS</span> total_orders,
+  (<span class="kw">SELECT</span> <span class="fn">SUM</span>(amount) <span class="kw">FROM</span> <span class="tbl">orders</span> o <span class="kw">WHERE</span> o.user_id = u.id) <span class="kw">AS</span> ltv,
+  (<span class="kw">SELECT</span> MAX(created_at) <span class="kw">FROM</span> <span class="tbl">orders</span> o <span class="kw">WHERE</span> o.user_id = u.id) <span class="kw">AS</span> last_order_date
+
+<span class="kw">FROM</span> <span class="tbl">users</span> u
+<span class="kw">WHERE</span> u.plan = <span class="str">'enterprise'</span>;
+<span class="cm">-- Note: for large tables, prefer LEFT JOIN with GROUP BY over correlated subqueries</span>
+
+<span class="cm">-- ANY / ALL operators</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">products</span>
+<span class="kw">WHERE</span> price > <span class="kw">ALL</span> (<span class="kw">SELECT</span> price <span class="kw">FROM</span> <span class="tbl">products</span> <span class="kw">WHERE</span> category=<span class="str">'budget'</span>);
+
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">products</span>
+<span class="kw">WHERE</span> price > <span class="kw">ANY</span> (<span class="kw">SELECT</span> price <span class="kw">FROM</span> <span class="tbl">products</span> <span class="kw">WHERE</span> category=<span class="str">'premium'</span>);</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 10 SET OPS -->
+<!-- ====================================================== -->
+<section id="set" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">10 / SET OPS</div>
+    <div class="sec-title">Set Operations</div>
+    <div class="sec-desc">UNION, INTERSECT, EXCEPT — combining result sets with dedup or not.</div>
+  </div>
+
+  <h2>UNION / INTERSECT / EXCEPT</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Set operation patterns</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- UNION ALL (faster — no dedup); UNION (deduplicates)</span>
+<span class="cm">-- Use case: combine two reporting periods</span>
+<span class="kw">SELECT</span> <span class="str">'2023'</span> <span class="kw">AS</span> year, region, <span class="fn">SUM</span>(revenue) <span class="kw">FROM</span> <span class="tbl">sales_2023</span> <span class="kw">GROUP BY</span> region
+<span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'2024'</span> <span class="kw">AS</span> year, region, <span class="fn">SUM</span>(revenue) <span class="kw">FROM</span> <span class="tbl">sales_2024</span> <span class="kw">GROUP BY</span> region;
+
+<span class="cm">-- INTERSECT: users who are both customers AND partners</span>
+<span class="kw">SELECT</span> email <span class="kw">FROM</span> <span class="tbl">customers</span>
+<span class="kw">INTERSECT</span>
+<span class="kw">SELECT</span> email <span class="kw">FROM</span> <span class="tbl">partners</span>;
+
+<span class="cm">-- EXCEPT: customers who are NOT partners</span>
+<span class="kw">SELECT</span> email <span class="kw">FROM</span> <span class="tbl">customers</span>
+<span class="kw">EXCEPT</span>
+<span class="kw">SELECT</span> email <span class="kw">FROM</span> <span class="tbl">partners</span>;
+
+<span class="cm">-- Multi-source data consolidation with source tag</span>
+<span class="kw">SELECT</span> <span class="str">'web'</span> <span class="kw">AS</span> source, id, email, created_at <span class="kw">FROM</span> <span class="tbl">web_users</span>
+<span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'app'</span>,              id, email, created_at <span class="kw">FROM</span> <span class="tbl">app_users</span>
+<span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> <span class="str">'api'</span>,              id, email, created_at <span class="kw">FROM</span> <span class="tbl">api_users</span>
+<span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span>;</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 11 JSON -->
+<!-- ====================================================== -->
+<section id="json" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">11 / JSONB</div>
+    <div class="sec-title">JSON & JSONB Operations</div>
+    <div class="sec-desc">PostgreSQL's JSONB is a full document store inside a relational database. Master it for flexible schemas.</div>
+  </div>
+
+  <h2>Extracting JSON Values</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">JSON operators and path queries</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- -> returns JSONB, ->> returns text</span>
+<span class="kw">SELECT</span>
+  payload -> <span class="str">'address'</span>                     <span class="kw">AS</span> address_json,
+  payload ->> <span class="str">'email'</span>                      <span class="kw">AS</span> email_text,
+  payload -> <span class="str">'address'</span> ->> <span class="str">'city'</span>         <span class="kw">AS</span> city,
+  payload #> <span class="str">'{address,zip}'</span>               <span class="kw">AS</span> zip_json,   <span class="cm">-- path array</span>
+  payload #>> <span class="str">'{address,zip}'</span>              <span class="kw">AS</span> zip_text,
+  (payload ->> <span class="str">'score'</span>)::NUMERIC          <span class="kw">AS</span> score,       <span class="cm">-- cast to type</span>
+  payload -> <span class="str">'tags'</span> -> <span class="num">0</span>                   <span class="kw">AS</span> first_tag    <span class="cm">-- array index</span>
+<span class="kw">FROM</span> <span class="tbl">events</span>;
+
+<span class="cm">-- Filtering on JSON fields</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">events</span>
+<span class="kw">WHERE</span>  payload ->> <span class="str">'event_type'</span> = <span class="str">'purchase'</span>
+  <span class="kw">AND</span>  (payload ->> <span class="str">'amount'</span>)::NUMERIC > <span class="num">100</span>
+  <span class="kw">AND</span>  payload @> <span class="str">'{"status": "completed"}'</span>   <span class="cm">-- containment check</span>
+  <span class="kw">AND</span>  payload ? <span class="str">'coupon_code'</span>;              <span class="cm">-- key existence</span></pre></div>
+
+  <h2>Modifying JSONB</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Non-destructive JSON updates</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Merge (shallow): overwrite specific keys</span>
+<span class="kw">UPDATE</span> <span class="tbl">users</span>
+<span class="kw">SET</span> metadata = metadata || <span class="str">'{"verified": true, "tier": "gold"}'</span>::jsonb
+<span class="kw">WHERE</span> id = <span class="param">$1</span>;
+
+<span class="cm">-- Deep set a nested key with jsonb_set</span>
+<span class="kw">UPDATE</span> <span class="tbl">users</span>
+<span class="kw">SET</span> metadata = <span class="fn">jsonb_set</span>(
+  metadata,
+  <span class="str">'{address,city}'</span>::text[],    <span class="cm">-- path</span>
+  <span class="str">'"Mumbai"'</span>::jsonb,            <span class="cm">-- new value (must be valid JSON)</span>
+  <span class="kw">true</span>                         <span class="cm">-- create if missing</span>
+)
+<span class="kw">WHERE</span> id = <span class="param">$1</span>;
+
+<span class="cm">-- Remove a key</span>
+<span class="kw">UPDATE</span> <span class="tbl">users</span>
+<span class="kw">SET</span> metadata = metadata - <span class="str">'temp_token'</span>     <span class="cm">-- remove key</span>
+<span class="kw">WHERE</span> metadata ? <span class="str">'temp_token'</span>;
+
+<span class="cm">-- Append to a JSON array</span>
+<span class="kw">UPDATE</span> <span class="tbl">users</span>
+<span class="kw">SET</span> metadata = <span class="fn">jsonb_set</span>(
+  metadata,
+  <span class="str">'{tags}'</span>:: text[],
+  (<span class="fn">COALESCE</span>(metadata-><span class="str">'tags'</span>, <span class="str">'[]'</span>::jsonb) || <span class="str">'"beta_tester"'</span>::jsonb)
+);</pre></div>
+
+  <h2>Expanding & Aggregating JSON</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">jsonb_each, jsonb_array_elements, build</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Expand JSON object to key-value rows</span>
+<span class="kw">SELECT</span> id, key, value
+<span class="kw">FROM</span> <span class="tbl">configs</span>, <span class="fn">jsonb_each</span>(settings);
+
+<span class="cm">-- Expand JSON array to rows</span>
+<span class="kw">SELECT</span> id, <fn>jsonb_array_elements_text</fn>(tags) <span class="kw">AS</span> tag
+<span class="kw">FROM</span> <span class="tbl">products</span>;
+
+<span class="cm">-- Aggregate rows into JSON object</span>
+<span class="kw">SELECT</span>
+  user_id,
+  <span class="fn">jsonb_object_agg</span>(key, value)   <span class="kw">AS</span> settings_map,
+  <span class="fn">jsonb_agg</span>(
+    <span class="fn">jsonb_build_object</span>(<span class="str">'id'</span>, order_id, <span class="str">'amount'</span>, amount)
+  )                               <span class="kw">AS</span> orders_json
+<span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">GROUP BY</span> user_id;</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 12 ARRAYS -->
+<!-- ====================================================== -->
+<section id="array" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">12 / ARRAYS</div>
+    <div class="sec-title">Arrays & Composite Types</div>
+    <div class="sec-desc">Native array columns, unnesting, array operators, and composite row types.</div>
+  </div>
+
+  <h2>Array Operations</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Array DML and query patterns</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Creating and querying arrays</span>
+<span class="kw">SELECT</span>
+  tags,
+  tags[<span class="num">1</span>]                              <span class="kw">AS</span> first_tag,    <span class="cm">-- 1-indexed!</span>
+  <span class="fn">array_length</span>(tags, <span class="num">1</span>)               <span class="kw">AS</span> tag_count,
+  <span class="fn">array_to_string</span>(tags, <span class="str">', '</span>)         <span class="kw">AS</span> tags_csv,
+  <span class="fn">array_upper</span>(tags, <span class="num">1</span>)                <span class="kw">AS</span> last_index,
+  tags[<span class="num">2</span>:<span class="num">4</span>]                            <span class="kw">AS</span> slice         <span class="cm">-- subarray</span>
+<span class="kw">FROM</span> <span class="tbl">products</span>;
+
+<span class="cm">-- Array containment and overlap</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">products</span>
+<span class="kw">WHERE</span> tags @> <span class="kw">ARRAY</span>[<span class="str">'sale'</span>, <span class="str">'new'</span>]::text[]  <span class="cm">-- contains all</span>
+   <span class="kw">OR</span> tags <span class="op">&amp;&amp;</span> <span class="kw">ARRAY</span>[<span class="str">'featured'</span>]::text[];       <span class="cm">-- overlaps any</span>
+
+<span class="cm">-- ANY / ALL with arrays</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">products</span> <span class="kw">WHERE</span> <span class="str">'sale'</span> = <span class="kw">ANY</span>(tags);
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">orders</span>   <span class="kw">WHERE</span> status = <span class="kw">ANY</span>(<span class="kw">ARRAY</span>[<span class="str">'pending'</span>, <span class="str">'processing'</span>]);
+
+<span class="cm">-- Append / prepend / remove from array</span>
+<span class="kw">UPDATE</span> <span class="tbl">products</span>
+<span class="kw">SET</span> tags = <span class="fn">array_append</span>(tags, <span class="str">'clearance'</span>)
+<span class="kw">WHERE</span> stock < <span class="num">10</span>;
+
+<span class="kw">UPDATE</span> <span class="tbl">products</span>
+<span class="kw">SET</span> tags = <span class="fn">array_remove</span>(tags, <span class="str">'new'</span>)
+<span class="kw">WHERE</span> created_at < <span class="fn">NOW</span>() - <span class="kw">INTERVAL</span> <span class="str">'30 days'</span>;
+
+<span class="cm">-- UNNEST: expand array to rows (with ordinality for index)</span>
+<span class="kw">SELECT</span> p.id, t.tag, t.pos
+<span class="kw">FROM</span> <span class="tbl">products</span> p,
+<span class="fn">UNNEST</span>(p.tags) <span class="kw">WITH ORDINALITY</span> <span class="kw">AS</span> t(tag, pos);</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 13 TEXT SEARCH -->
+<!-- ====================================================== -->
+<section id="text" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">13 / TEXT</div>
+    <div class="sec-title">Text Search & Pattern Matching</div>
+    <div class="sec-desc">Full-text search, trigram similarity, regex, and LIKE optimization.</div>
+  </div>
+
+  <h2>Full-Text Search</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">tsvector, tsquery, ranking</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Basic FTS with GIN index</span>
+<span class="cm">-- Setup: ALTER TABLE articles ADD COLUMN search_vector tsvector;</span>
+<span class="cm">-- UPDATE articles SET search_vector = to_tsvector('english', title || ' ' || body);</span>
+<span class="cm">-- CREATE INDEX ON articles USING GIN (search_vector);</span>
+
+<span class="kw">SELECT</span>
+  id, title,
+  <span class="fn">ts_rank</span>(search_vector, query)     <span class="kw">AS</span> rank,
+  <span class="fn">ts_headline</span>(<span class="str">'english'</span>, body, query,
+    <span class="str">'MaxWords=20, MinWords=5'</span>)      <span class="kw">AS</span> snippet
+<span class="kw">FROM</span> <span class="tbl">articles</span>,
+  <span class="fn">to_tsquery</span>(<span class="str">'english'</span>, <span class="str">'database &amp; performance'</span>) query
+<span class="kw">WHERE</span> search_vector @@ query
+<span class="kw">ORDER BY</span> rank <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">20</span>;
+
+<span class="cm">-- Phrase search</span>
+<span class="kw">WHERE</span> search_vector @@ <span class="fn">phraseto_tsquery</span>(<span class="str">'english'</span>, <span class="str">'alloydb performance'</span>)
+
+<span class="cm">-- Weighted FTS (title matters more than body)</span>
+<span class="kw">UPDATE</span> <span class="tbl">articles</span>
+<span class="kw">SET</span> search_vector =
+  <span class="fn">setweight</span>(<span class="fn">to_tsvector</span>(<span class="str">'english'</span>, title), <span class="str">'A'</span>) ||  <span class="cm">-- A=highest weight</span>
+  <span class="fn">setweight</span>(<span class="fn">to_tsvector</span>(<span class="str">'english'</span>, body),  <span class="str">'B'</span>);</pre></div>
+
+  <h2>Trigram Similarity (pg_trgm)</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Fuzzy search, typo-tolerant matching</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- CREATE EXTENSION pg_trgm;</span>
+<span class="cm">-- CREATE INDEX ON users USING GIN (email gin_trgm_ops);</span>
+
+<span class="cm">-- Similarity search (fuzzy match)</span>
+<span class="kw">SELECT</span> email, <span class="fn">similarity</span>(email, <span class="str">'john.doe@gmail.com'</span>) <span class="kw">AS</span> sim
+<span class="kw">FROM</span> <span class="tbl">users</span>
+<span class="kw">WHERE</span> email % <span class="str">'john.doe@gmail.com'</span>   <span class="cm">-- % = similarity threshold (default 0.3)</span>
+<span class="kw">ORDER BY</span> sim <span class="kw">DESC</span>;
+
+<span class="cm">-- LIKE with trigram index (the LIKE works with GIN index now!)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">products</span>
+<span class="kw">WHERE</span> name <span class="kw">ILIKE</span> <span class="str">'%wireless headphone%'</span>;  <span class="cm">-- uses GIN index</span>
+
+<span class="cm">-- Word similarity (useful for product search)</span>
+<span class="kw">SELECT</span> name, <span class="fn">word_similarity</span>(<span class="str">'headphone'</span>, name) <span class="kw">AS</span> ws
+<span class="kw">FROM</span> <span class="tbl">products</span>
+<span class="kw">WHERE</span> <span class="str">'headphone'</span> <op>&lt;%</op> name
+<span class="kw">ORDER BY</span> ws <span class="kw">DESC</span> <span class="kw">LIMIT</span> <span class="num">10</span>;</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 14 DATETIME -->
+<!-- ====================================================== -->
+<section id="datetime" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">14 / DATE</div>
+    <div class="sec-title">Date & Time Operations</div>
+    <div class="sec-desc">Date math, truncation, series generation, timezone handling, and interval arithmetic.</div>
+  </div>
+
+  <h2>Date Math & Truncation</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Essential date operations</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="kw">SELECT</span>
+  <span class="fn">NOW</span>()                                    <span class="kw">AS</span> now_with_tz,
+  <span class="fn">CURRENT_DATE</span>                              <span class="kw">AS</span> today,
+  <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, <span class="fn">NOW</span>())               <span class="kw">AS</span> month_start,
+  <span class="fn">DATE_TRUNC</span>(<span class="str">'week'</span>, <span class="fn">NOW</span>())                <span class="kw">AS</span> week_start,
+  <span class="fn">DATE_TRUNC</span>(<span class="str">'quarter'</span>, <span class="fn">NOW</span>())             <span class="kw">AS</span> quarter_start,
+  <span class="fn">DATE_TRUNC</span>(<span class="str">'year'</span>, <span class="fn">NOW</span>())                <span class="kw">AS</span> year_start,
+
+  <span class="cm">-- End of month</span>
+  <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, <span class="fn">NOW</span>()) + <span class="kw">INTERVAL</span> <span class="str">'1 month - 1 day'</span> <span class="kw">AS</span> month_end,
+
+  <span class="cm">-- Date arithmetic</span>
+  <span class="fn">NOW</span>() - <span class="kw">INTERVAL</span> <span class="str">'30 days'</span>              <span class="kw">AS</span> thirty_days_ago,
+  <span class="fn">NOW</span>() + <span class="kw">INTERVAL</span> <span class="str">'1 year 3 months'</span>     <span class="kw">AS</span> future,
+
+  <span class="cm">-- Parts extraction</span>
+  <span class="fn">EXTRACT</span>(<span class="kw">YEAR</span>  <span class="kw">FROM</span> <span class="fn">NOW</span>())::INT           <span class="kw">AS</span> year,
+  <span class="fn">EXTRACT</span>(<span class="kw">MONTH</span> <span class="kw">FROM</span> <span class="fn">NOW</span>())::INT           <span class="kw">AS</span> month,
+  <span class="fn">EXTRACT</span>(<span class="kw">DOW</span>   <span class="kw">FROM</span> <span class="fn">NOW</span>())::INT           <span class="kw">AS</span> day_of_week, <span class="cm">-- 0=Sun</span>
+  <span class="fn">EXTRACT</span>(EPOCH  <span class="kw">FROM</span> <span class="fn">NOW</span>())::BIGINT        <span class="kw">AS</span> unix_ts,
+
+  <span class="cm">-- Age / duration</span>
+  <span class="fn">AGE</span>(<span class="fn">NOW</span>(), <span class="str">'2020-01-01'</span>::timestamptz)    <span class="kw">AS</span> age,
+  <span class="fn">EXTRACT</span>(EPOCH <span class="kw">FROM</span> (<span class="fn">NOW</span>() - created_at)) <span class="kw">AS</span> seconds_since_created
+<span class="kw">FROM</span> <span class="tbl">users</span> <span class="kw">LIMIT</span> <span class="num">1</span>;</pre></div>
+
+  <h2>Generate Date Series (Fill Gaps)</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Calendar spine for reporting</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Revenue by day including days with zero orders (no gaps)</span>
+<span class="kw">WITH</span> <span class="tbl">calendar</span> <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> d::DATE <span class="kw">AS</span> day
+  <span class="kw">FROM</span>  <span class="fn">GENERATE_SERIES</span>(
+    <span class="str">'2024-01-01'</span>::DATE,
+    <span class="str">'2024-12-31'</span>::DATE,
+    <span class="str">'1 day'</span>::INTERVAL
+  ) d
+)
+<span class="kw">SELECT</span>
+  c.day,
+  <span class="fn">COALESCE</span>(<span class="fn">SUM</span>(o.amount), <span class="num">0</span>) <span class="kw">AS</span> revenue,
+  <span class="fn">COUNT</span>(o.id)               <span class="kw">AS</span> orders
+<span class="kw">FROM</span> <span class="tbl">calendar</span> c
+<span class="kw">LEFT JOIN</span> <span class="tbl">orders</span> o
+  <span class="kw">ON</span>  o.created_at::DATE = c.day
+  <span class="kw">AND</span> o.status = <span class="str">'completed'</span>
+<span class="kw">GROUP BY</span> c.day
+<span class="kw">ORDER BY</span> c.day;</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 15 TRANSACTIONS -->
+<!-- ====================================================== -->
+<section id="txn" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">15 / TXN</div>
+    <div class="sec-title">Transactions & Savepoints</div>
+    <div class="sec-desc">Transaction control, isolation levels, savepoints for partial rollbacks, and advisory locks.</div>
+  </div>
+
+  <h2>Transaction Isolation Levels</h2>
+  <table class="ref">
+    <tr><th>Level</th><th>Dirty Read</th><th>Non-Repeatable</th><th>Phantom</th><th>Use Case</th></tr>
+    <tr><td>READ COMMITTED (default)</td><td>No</td><td>Yes</td><td>Yes</td><td>Most OLTP</td></tr>
+    <tr><td>REPEATABLE READ</td><td>No</td><td>No</td><td>No*</td><td>Reporting, batch</td></tr>
+    <tr><td>SERIALIZABLE</td><td>No</td><td>No</td><td>No</td><td>Financial, inventory</td></tr>
+  </table>
+
+  <h2>Transaction Patterns</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Isolation, savepoints, advisory locks</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Explicit transaction with isolation</span>
+<span class="kw">BEGIN</span> ISOLATION LEVEL REPEATABLE READ;
+
+  <span class="kw">SELECT</span> balance <span class="kw">FROM</span> <span class="tbl">accounts</span> <span class="kw">WHERE</span> id = <span class="num">1</span> <span class="kw">FOR UPDATE</span>;  <span class="cm">-- lock it</span>
+  <span class="kw">UPDATE</span> <span class="tbl">accounts</span> <span class="kw">SET</span> balance = balance - <span class="num">500</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;
+  <span class="kw">UPDATE</span> <span class="tbl">accounts</span> <span class="kw">SET</span> balance = balance + <span class="num">500</span> <span class="kw">WHERE</span> id = <span class="num">2</span>;
+
+<span class="kw">COMMIT</span>;
+
+<span class="cm">-- SAVEPOINT: partial rollback within a transaction</span>
+<span class="kw">BEGIN</span>;
+  <span class="kw">INSERT INTO</span> <span class="tbl">orders</span> ... <span class="kw">RETURNING</span> id <span class="kw">INTO</span> v_order_id;
+
+  <span class="kw">SAVEPOINT</span> after_order;
+
+  <span class="kw">INSERT INTO</span> <span class="tbl">payments</span> (order_id, ...) <span class="kw">VALUES</span> (v_order_id, ...);
+  <span class="cm">-- If payment insert fails:</span>
+  <span class="kw">ROLLBACK TO SAVEPOINT</span> after_order;  <span class="cm">-- order intact, payment rolled back</span>
+
+  <span class="kw">INSERT INTO</span> <span class="tbl">payments</span> ... <span class="cm">-- retry with corrected data</span>
+
+<span class="kw">COMMIT</span>;
+
+<span class="cm">-- Advisory locks: application-level mutex (no table lock)</span>
+<span class="cm">-- Use for: preventing duplicate job processing</span>
+<span class="kw">SELECT</span> <span class="fn">pg_try_advisory_lock</span>(<span class="num">12345</span>);     <span class="cm">-- returns true if acquired</span>
+<span class="kw">SELECT</span> <span class="fn">pg_advisory_lock</span>(<span class="num">12345</span>);         <span class="cm">-- blocks until acquired</span>
+<span class="kw">SELECT</span> <span class="fn">pg_advisory_unlock</span>(<span class="num">12345</span>);       <span class="cm">-- release</span>
+<span class="cm">-- Session-scoped; released automatically on disconnect</span></pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 16 LOCKING -->
+<!-- ====================================================== -->
+<section id="locking" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">16 / LOCK</div>
+    <div class="sec-title">Explicit Locking Patterns</div>
+    <div class="sec-desc">SELECT FOR UPDATE, SKIP LOCKED, NOWAIT, and lock-free patterns for queues and concurrent workers.</div>
+  </div>
+
+  <h2>Row-Level Lock Variants</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">FOR UPDATE / SKIP LOCKED — queue processing</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- FOR UPDATE: lock rows for update (blocks concurrent updates)</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">SELECT</span> id, amount <span class="kw">FROM</span> <span class="tbl">accounts</span>
+<span class="kw">WHERE</span> id = <span class="param">$1</span>
+<span class="kw">FOR UPDATE</span>;  <span class="cm">-- blocks if another txn holds lock</span>
+<span class="kw">UPDATE</span> ...
+<span class="kw">COMMIT</span>;
+
+<span class="cm">-- FOR UPDATE NOWAIT: fail immediately if locked (no waiting)</span>
+<span class="kw">SELECT</span> id <span class="kw">FROM</span> <span class="tbl">accounts</span> <span class="kw">WHERE</span> id = <span class="param">$1</span>
+<span class="kw">FOR UPDATE NOWAIT</span>;  <span class="cm">-- raises ERROR if locked → app catches & retries</span>
+
+<span class="cm">-- SKIP LOCKED: skip locked rows — perfect for job queues</span>
+<span class="cm">-- Multiple workers can grab different jobs concurrently</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">SELECT</span> id, payload
+<span class="kw">FROM</span> <span class="tbl">job_queue</span>
+<span class="kw">WHERE</span> status = <span class="str">'pending'</span>
+<span class="kw">ORDER BY</span> created_at
+<span class="kw">LIMIT</span> <span class="num">10</span>
+<span class="kw">FOR UPDATE SKIP LOCKED</span>;  <span class="cm">-- this worker grabs 10 unlocked jobs</span>
+
+<span class="kw">UPDATE</span> <span class="tbl">job_queue</span> <span class="kw">SET</span> status = <span class="str">'processing'</span>, worker_id = <span class="fn">pg_backend_pid</span>()
+<span class="kw">WHERE</span> id = <span class="kw">ANY</span>(<span class="kw">ARRAY</span>[...selected ids...]);
+<span class="kw">COMMIT</span>;
+
+<span class="cm">-- FOR SHARE: allows concurrent reads, blocks updates</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">accounts</span> <span class="kw">WHERE</span> id = <span class="param">$1</span> <span class="kw">FOR SHARE</span>;</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 17 UPSERT / MERGE -->
+<!-- ====================================================== -->
+<section id="upsert" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">17 / UPSERT</div>
+    <div class="sec-title">MERGE / ON CONFLICT</div>
+    <div class="sec-desc">Atomic upsert patterns — the most important DML pattern for idempotent data pipelines.</div>
+  </div>
+
+  <h2>ON CONFLICT (PostgreSQL Upsert)</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">INSERT ... ON CONFLICT — all patterns</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- DO NOTHING: ignore if duplicate</span>
+<span class="kw">INSERT INTO</span> <span class="tbl">user_events</span> (user_id, event_type, occurred_at)
+<span class="kw">VALUES</span> (<span class="param">$1</span>, <span class="param">$2</span>, <span class="param">$3</span>)
+<span class="kw">ON CONFLICT</span> (user_id, event_type, occurred_at) <span class="kw">DO NOTHING</span>;
+
+<span class="cm">-- DO UPDATE: upsert — update specific fields on conflict</span>
+<span class="kw">INSERT INTO</span> <span class="tbl">user_stats</span> (user_id, total_orders, total_revenue, last_updated)
+<span class="kw">VALUES</span> (<span class="param">$1</span>, <span class="param">$2</span>, <span class="param">$3</span>, <span class="fn">NOW</span>())
+<span class="kw">ON CONFLICT</span> (user_id) <span class="kw">DO UPDATE SET</span>
+  total_orders   = <span class="tbl">user_stats</span>.total_orders + <span class="kw">EXCLUDED</span>.total_orders,
+  total_revenue  = <span class="tbl">user_stats</span>.total_revenue + <span class="kw">EXCLUDED</span>.total_revenue,
+  last_updated   = <span class="kw">EXCLUDED</span>.last_updated   <span class="cm">-- EXCLUDED = the rejected insert row</span>
+<span class="kw">RETURNING</span> *;
+
+<span class="cm">-- Conditional upsert: only update if new value is larger</span>
+<span class="kw">INSERT INTO</span> <span class="tbl">leaderboard</span> (user_id, high_score)
+<span class="kw">VALUES</span> (<span class="param">$1</span>, <span class="param">$2</span>)
+<span class="kw">ON CONFLICT</span> (user_id) <span class="kw">DO UPDATE SET</span>
+  high_score = <span class="fn">GREATEST</span>(<span class="tbl">leaderboard</span>.high_score, <span class="kw">EXCLUDED</span>.high_score);
+
+<span class="cm">-- Conflict on partial unique index</span>
+<span class="kw">CREATE UNIQUE INDEX</span> idx_active_users_email
+  <span class="kw">ON</span> <span class="tbl">users</span> (email) <span class="kw">WHERE</span> deleted_at <span class="kw">IS NULL</span>;
+
+<span class="kw">INSERT INTO</span> <span class="tbl">users</span> (email, plan)
+<span class="kw">VALUES</span> (<span class="param">$1</span>, <span class="param">$2</span>)
+<span class="kw">ON CONFLICT</span> (email) <span class="kw">WHERE</span> deleted_at <span class="kw">IS NULL</span>  <span class="cm">-- matches partial index</span>
+<span class="kw">DO UPDATE SET</span> plan = <span class="kw">EXCLUDED</span>.plan;</pre></div>
+
+  <h2>MERGE (SQL:2003, PostgreSQL 15+)</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Full MERGE statement</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="kw">MERGE INTO</span> <span class="tbl">target_users</span> t
+<span class="kw">USING</span> <span class="tbl">staging_users</span> s <span class="kw">ON</span> t.email = s.email
+<span class="kw">WHEN MATCHED AND</span> s.updated_at > t.updated_at <span class="kw">THEN</span>
+  <span class="kw">UPDATE SET</span>
+    name       = s.name,
+    plan       = s.plan,
+    updated_at = s.updated_at
+<span class="kw">WHEN MATCHED AND</span> s.status = <span class="str">'deleted'</span> <span class="kw">THEN</span>
+  <span class="kw">DELETE</span>
+<span class="kw">WHEN NOT MATCHED THEN</span>
+  <span class="kw">INSERT</span> (email, name, plan, created_at)
+  <span class="kw">VALUES</span> (s.email, s.name, s.plan, <span class="fn">NOW</span>());</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 18 PIVOT -->
+<!-- ====================================================== -->
+<section id="pivot" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">18 / PIVOT</div>
+    <div class="sec-title">Pivot, Unpivot & Crosstab</div>
+    <div class="sec-desc">Rotate rows to columns and columns to rows — essential for reporting.</div>
+  </div>
+
+  <h2>Pivot with FILTER (Dynamic Columns)</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Manual pivot — revenue by month as columns</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="kw">SELECT</span>
+  region,
+  <span class="fn">SUM</span>(amount) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> <span class="fn">EXTRACT</span>(MONTH <span class="kw">FROM</span> created_at) = <span class="num">1</span>)  <span class="kw">AS</span> jan,
+  <span class="fn">SUM</span>(amount) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> <span class="fn">EXTRACT</span>(MONTH <span class="kw">FROM</span> created_at) = <span class="num">2</span>)  <span class="kw">AS</span> feb,
+  <span class="fn">SUM</span>(amount) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> <span class="fn">EXTRACT</span>(MONTH <span class="kw">FROM</span> created_at) = <span class="num">3</span>)  <span class="kw">AS</span> mar,
+  <span class="fn">SUM</span>(amount) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> <span class="fn">EXTRACT</span>(MONTH <span class="kw">FROM</span> created_at) = <span class="num">12</span>) <span class="kw">AS</span> dec,
+  <span class="fn">SUM</span>(amount)                                                      <span class="kw">AS</span> total
+<span class="kw">FROM</span> <span class="tbl">orders</span>
+<span class="kw">WHERE</span> status = <span class="str">'completed'</span>
+  <span class="kw">AND</span> <span class="fn">EXTRACT</span>(YEAR <span class="kw">FROM</span> created_at) = <span class="num">2024</span>
+<span class="kw">GROUP BY</span> region;
+
+<span class="cm">-- Crosstab (tablefunc extension)</span>
+<span class="cm">-- CREATE EXTENSION tablefunc;</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="fn">crosstab</span>(
+  <span class="str">$$SELECT region, month::TEXT, revenue
+    FROM monthly_sales ORDER BY 1, 2$$</span>,
+  <span class="str">$$SELECT DISTINCT month::TEXT FROM monthly_sales ORDER BY 1$$</span>
+) <span class="kw">AS</span> ct (region TEXT, jan NUMERIC, feb NUMERIC, mar NUMERIC);
+
+<span class="cm">-- Unpivot: columns → rows (normalize wide table)</span>
+<span class="kw">SELECT</span> user_id, metric, value
+<span class="kw">FROM</span> <span class="tbl">user_metrics</span>
+<span class="kw">CROSS JOIN LATERAL</span> (
+  <span class="kw">VALUES</span>
+    (<span class="str">'logins'</span>,   login_count::NUMERIC),
+    (<span class="str">'orders'</span>,   order_count::NUMERIC),
+    (<span class="str">'revenue'</span>,  total_revenue)
+) v(metric, value);</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 19 GAPS & ISLANDS -->
+<!-- ====================================================== -->
+<section id="gaps" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">19 / GAPS</div>
+    <div class="sec-title">Gaps, Islands & Sequences</div>
+    <div class="sec-desc">Finding missing IDs, consecutive sequences, session grouping, and time-series islands.</div>
+  </div>
+
+  <h2>Finding Gaps in Sequences</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Missing IDs in a sequence</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Find missing IDs in orders table</span>
+<span class="kw">SELECT</span> s.id <span class="kw">AS</span> missing_id
+<span class="kw">FROM</span> <span class="fn">generate_series</span>(
+  (<span class="kw">SELECT</span> <span class="fn">MIN</span>(id) <span class="kw">FROM</span> <span class="tbl">orders</span>),
+  (<span class="kw">SELECT</span> <span class="fn">MAX</span>(id) <span class="kw">FROM</span> <span class="tbl">orders</span>)
+) s(id)
+<span class="kw">LEFT JOIN</span> <span class="tbl">orders</span> o <span class="kw">ON</span> o.id = s.id
+<span class="kw">WHERE</span> o.id <span class="kw">IS NULL</span>;
+
+<span class="cm">-- Gaps with range: show start and end of each gap</span>
+<span class="kw">WITH</span> <span class="tbl">gaps</span> <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>
+    id,
+    <span class="fn">LEAD</span>(id) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> id) <span class="kw">AS</span> next_id
+  <span class="kw">FROM</span> <span class="tbl">orders</span>
+)
+<span class="kw">SELECT</span>
+  id + <span class="num">1</span>       <span class="kw">AS</span> gap_start,
+  next_id - <span class="num">1</span>  <span class="kw">AS</span> gap_end,
+  next_id - id - <span class="num">1</span> <span class="kw">AS</span> gap_size
+<span class="kw">FROM</span> <span class="tbl">gaps</span>
+<span class="kw">WHERE</span> next_id > id + <span class="num">1</span>
+<span class="kw">ORDER BY</span> gap_size <span class="kw">DESC</span>;</pre></div>
+
+  <h2>Islands — Grouping Consecutive Events</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Session detection, consecutive date groups</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Group consecutive active days per user (streak detection)</span>
+<span class="kw">WITH</span>
+<span class="tbl">active_days</span> <span class="kw">AS</span> (
+  <span class="kw">SELECT DISTINCT</span>
+    user_id,
+    occurred_at::DATE <span class="kw">AS</span> day
+  <span class="kw">FROM</span> <span class="tbl">events</span>
+),
+<span class="tbl">with_prev</span> <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>
+    user_id, day,
+    day - (<span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (
+      <span class="kw">PARTITION BY</span> user_id <span class="kw">ORDER BY</span> day
+    ) * <span class="kw">INTERVAL</span> <span class="str">'1 day'</span>)::DATE <span class="kw">AS</span> island_id
+  <span class="kw">FROM</span> <span class="tbl">active_days</span>
+)
+<span class="kw">SELECT</span>
+  user_id,
+  <span class="fn">MIN</span>(day)  <span class="kw">AS</span> streak_start,
+  <span class="fn">MAX</span>(day)  <span class="kw">AS</span> streak_end,
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> streak_days
+<span class="kw">FROM</span> <span class="tbl">with_prev</span>
+<span class="kw">GROUP BY</span> user_id, island_id
+<span class="kw">ORDER BY</span> streak_days <span class="kw">DESC</span>;</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 20 PERF PATTERNS -->
+<!-- ====================================================== -->
+<section id="perf" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">20 / PERF</div>
+    <div class="sec-title">Performance Query Patterns</div>
+    <div class="sec-desc">Patterns that scale: avoiding N+1, writing planner-friendly queries, index-only scans, and partial indexes.</div>
+  </div>
+
+  <h2>Index-Only Scans — Covering Indexes</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Cover all needed columns in the index</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Query: find pending orders with amount</span>
+<span class="kw">SELECT</span> id, amount <span class="kw">FROM</span> <span class="tbl">orders</span> <span class="kw">WHERE</span> status = <span class="str">'pending'</span>;
+
+<span class="cm">-- Normal index: still needs heap fetch for amount</span>
+<span class="kw">CREATE INDEX</span> idx_orders_status <span class="kw">ON</span> <span class="tbl">orders</span> (status);
+
+<span class="cm">-- Covering index: amount INCLUDED → pure index-only scan</span>
+<span class="kw">CREATE INDEX</span> idx_orders_status_cover
+  <span class="kw">ON</span> <span class="tbl">orders</span> (status)
+  <span class="kw">INCLUDE</span> (id, amount);  <span class="cm">-- INCLUDE cols not in predicate/order</span>
+
+<span class="cm">-- Partial index: only index what you query</span>
+<span class="kw">CREATE INDEX</span> idx_orders_pending
+  <span class="kw">ON</span> <span class="tbl">orders</span> (created_at)
+  <span class="kw">WHERE</span> status = <span class="str">'pending'</span>;  <span class="cm">-- tiny index, only pending rows</span>
+
+<span class="cm">-- Verify index-only scan (no heap fetches)</span>
+<span class="kw">EXPLAIN</span> (ANALYZE, BUFFERS)
+  <span class="kw">SELECT</span> id, amount <span class="kw">FROM</span> <span class="tbl">orders</span> <span class="kw">WHERE</span> status = <span class="str">'pending'</span>;
+<span class="cm">-- Look for "Index Only Scan" + "Heap Fetches: 0"</span></pre></div>
+
+  <h2>Avoiding Implicit Casts & Non-SARGable Predicates</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Write index-friendly WHERE clauses</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- ❌ Function on indexed column = full scan</span>
+<span class="kw">WHERE</span> <span class="fn">LOWER</span>(email) = <span class="str">'alice@co.com'</span>        <span class="cm">-- index on email not used</span>
+<span class="kw">WHERE</span> <span class="fn">DATE</span>(created_at) = <span class="str">'2024-01-15'</span>     <span class="cm">-- index on created_at not used</span>
+<span class="kw">WHERE</span> id::TEXT = <span class="str">'12345'</span>                  <span class="cm">-- implicit cast = no index</span>
+
+<span class="cm">-- ✅ Rewrite to be SARGable</span>
+<span class="kw">WHERE</span> email = <span class="str">'alice@co.com'</span>              <span class="cm">-- use expression index if needed</span>
+<span class="kw">WHERE</span> created_at >= <span class="str">'2024-01-15'</span>
+  <span class="kw">AND</span> created_at <op>&lt;</op> <span class="str">'2024-01-16'</span>           <span class="cm">-- range instead of DATE()</span>
+<span class="kw">WHERE</span> id = <span class="num">12345</span>                          <span class="cm">-- correct type, no cast</span>
+
+<span class="cm">-- Expression index to fix LOWER() issue</span>
+<span class="kw">CREATE INDEX</span> idx_users_email_lower <span class="kw">ON</span> <span class="tbl">users</span> (<span class="fn">LOWER</span>(email));
+
+<span class="cm">-- ❌ OR prevents index usage sometimes</span>
+<span class="kw">WHERE</span> status = <span class="str">'pending'</span> <span class="kw">OR</span> status = <span class="str">'processing'</span>
+<span class="cm">-- ✅ Use IN or = ANY()</span>
+<span class="kw">WHERE</span> status = <span class="kw">ANY</span>(<span class="kw">ARRAY</span>[<span class="str">'pending'</span>, <span class="str">'processing'</span>])</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 21 PL/pgSQL -->
+<!-- ====================================================== -->
+<section id="plpgsql" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">21 / PL/pgSQL</div>
+    <div class="sec-title">PL/pgSQL — Functions & Procedures</div>
+    <div class="sec-desc">Stored functions, procedures, triggers, cursors, and exception handling for complex server-side logic.</div>
+  </div>
+
+  <h2>Function Patterns</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Functions, procedures, returns table</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Scalar function</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> <span class="fn">calculate_discount</span>(
+  p_amount  NUMERIC,
+  p_plan    TEXT
+) <span class="kw">RETURNS</span> NUMERIC
+LANGUAGE plpgsql STABLE <span class="cm">-- STABLE = no side effects, same result in txn</span>
+<span class="kw">AS</span> $$
+<span class="kw">BEGIN</span>
+  <span class="kw">RETURN</span> p_amount * <span class="kw">CASE</span>
+    <span class="kw">WHEN</span> p_plan = <span class="str">'enterprise'</span> <span class="kw">THEN</span> <span class="num">0.20</span>
+    <span class="kw">WHEN</span> p_plan = <span class="str">'pro'</span>        <span class="kw">THEN</span> <span class="num">0.10</span>
+    <span class="kw">ELSE</span> <span class="num">0</span>
+  <span class="kw">END</span>;
+<span class="kw">END</span>;
+$$;
+
+<span class="cm">-- Table-returning function (use in FROM clause)</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> <span class="fn">get_user_summary</span>(p_user_id BIGINT)
+<span class="kw">RETURNS TABLE</span> (
+  order_id    BIGINT,
+  amount      NUMERIC,
+  status      TEXT,
+  created_at  TIMESTAMPTZ
+)
+LANGUAGE plpgsql STABLE <span class="kw">AS</span>
+$$
+<span class="kw">BEGIN</span>
+  <span class="kw">RETURN QUERY</span>
+    <span class="kw">SELECT</span> id, amount, status, created_at
+    <span class="kw">FROM</span>  <span class="tbl">orders</span>
+    <span class="kw">WHERE</span> user_id = p_user_id
+      <span class="kw">AND</span> deleted_at <span class="kw">IS NULL</span>
+    <span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span>;
+<span class="kw">END</span>;
+$$;
+
+<span class="cm">-- Usage</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="fn">get_user_summary</span>(<span class="num">42</span>);</pre></div>
+
+  <h2>Stored Procedure with Exception Handling</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Full procedure with error handling and logging</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="kw">CREATE OR REPLACE PROCEDURE</span> <span class="fn">process_payment</span>(
+  p_order_id  BIGINT,
+  p_amount    NUMERIC,
+  p_method    TEXT
+)
+LANGUAGE plpgsql <span class="kw">AS</span>
+$$
+<span class="kw">DECLARE</span>
+  v_user_id   BIGINT;
+  v_balance   NUMERIC;
+  v_payment_id BIGINT;
+<span class="kw">BEGIN</span>
+  <span class="cm">-- Lock order row</span>
+  <span class="kw">SELECT</span> user_id <span class="kw">INTO STRICT</span> v_user_id
+  <span class="kw">FROM</span>  <span class="tbl">orders</span>
+  <span class="kw">WHERE</span> id = p_order_id
+  <span class="kw">FOR UPDATE</span>;
+
+  <span class="cm">-- Validate balance</span>
+  <span class="kw">SELECT</span> balance <span class="kw">INTO</span> v_balance
+  <span class="kw">FROM</span>  <span class="tbl">accounts</span>
+  <span class="kw">WHERE</span> user_id = v_user_id;
+
+  <span class="kw">IF</span> v_balance <op>&lt;</op> p_amount <span class="kw">THEN</span>
+    <span class="fn">RAISE EXCEPTION</span> <span class="str">'Insufficient balance: % available, % required'</span>,
+      v_balance, p_amount
+      <span class="kw">USING</span> ERRCODE = <span class="str">'P0001'</span>;
+  <span class="kw">END IF</span>;
+
+  <span class="cm">-- Deduct and record</span>
+  <span class="kw">UPDATE</span> <span class="tbl">accounts</span> <span class="kw">SET</span> balance = balance - p_amount
+  <span class="kw">WHERE</span> user_id = v_user_id;
+
+  <span class="kw">INSERT INTO</span> <span class="tbl">payments</span> (order_id, amount, method, status)
+  <span class="kw">VALUES</span> (p_order_id, p_amount, p_method, <span class="str">'completed'</span>)
+  <span class="kw">RETURNING</span> id <span class="kw">INTO</span> v_payment_id;
+
+  <span class="kw">UPDATE</span> <span class="tbl">orders</span> <span class="kw">SET</span> status = <span class="str">'paid'</span>, payment_id = v_payment_id
+  <span class="kw">WHERE</span> id = p_order_id;
+
+  <span class="fn">RAISE NOTICE</span> <span class="str">'Payment % completed for order %'</span>, v_payment_id, p_order_id;
+
+<span class="kw">EXCEPTION</span>
+  <span class="kw">WHEN SQLSTATE</span> <span class="str">'P0001'</span> <span class="kw">THEN</span>
+    <span class="fn">RAISE</span>;  <span class="cm">-- re-raise business logic errors</span>
+  <span class="kw">WHEN OTHERS THEN</span>
+    <span class="fn">RAISE EXCEPTION</span> <span class="str">'Payment failed for order %: %'</span>,
+      p_order_id, SQLERRM;
+<span class="kw">END</span>;
+$$;
+
+<span class="cm">-- Call it</span>
+<span class="kw">CALL</span> <span class="fn">process_payment</span>(<span class="num">1001</span>, <span class="num">99.99</span>, <span class="str">'credit_card'</span>);</pre></div>
+
+  <h2>Trigger Function</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Audit trail trigger</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Audit log trigger: records every change to orders</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> <span class="fn">audit_orders</span>()
+<span class="kw">RETURNS TRIGGER</span> LANGUAGE plpgsql <span class="kw">AS</span>
+$$
+<span class="kw">BEGIN</span>
+  <span class="kw">INSERT INTO</span> <span class="tbl">order_audit</span> (
+    order_id, operation, old_status, new_status,
+    old_amount, new_amount, changed_by, changed_at
+  ) <span class="kw">VALUES</span> (
+    <span class="fn">COALESCE</span>(NEW.id, OLD.id),
+    TG_OP,                          <span class="cm">-- INSERT / UPDATE / DELETE</span>
+    OLD.status, NEW.status,
+    OLD.amount, NEW.amount,
+    <span class="fn">CURRENT_USER</span>,
+    <span class="fn">NOW</span>()
+  );
+  <span class="kw">RETURN</span> <span class="kw">NEW</span>;
+<span class="kw">END</span>;
+$$;
+
+<span class="kw">CREATE TRIGGER</span> trg_audit_orders
+  <span class="kw">AFTER INSERT OR UPDATE OR DELETE ON</span> <span class="tbl">orders</span>
+  <span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> <span class="fn">audit_orders</span>();</pre></div>
+</section>
+
+<!-- ====================================================== -->
+<!-- 22 BULK OPS -->
+<!-- ====================================================== -->
+<section id="bulk" class="sec">
+  <div class="sec-header">
+    <div class="sec-num">22 / BULK</div>
+    <div class="sec-title">Bulk Operations & Batch Strategies</div>
+    <div class="sec-desc">High-throughput data processing patterns — staging tables, parallel upsert, partition pruning, and ETL patterns.</div>
+  </div>
+
+  <h2>Staging Table ETL Pattern</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Load → validate → merge pattern</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Step 1: Load raw data into staging (no constraints = fast)</span>
+<span class="kw">CREATE TEMP TABLE</span> <span class="tbl">staging_orders</span> (<span class="kw">LIKE</span> <span class="tbl">orders</span> <span class="kw">INCLUDING DEFAULTS</span>);
+
+\copy <span class="tbl">staging_orders</span> <span class="kw">FROM</span> <span class="str">'./new_orders.csv'</span> <span class="kw">WITH</span> (FORMAT csv, HEADER);
+
+<span class="cm">-- Step 2: Validate (find bad rows)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">staging_orders</span>
+<span class="kw">WHERE</span>  amount <= <span class="num">0</span>
+    <span class="kw">OR</span> user_id <span class="kw">IS NULL</span>
+    <span class="kw">OR</span> status <span class="op">NOT IN</span> (<span class="str">'pending'</span>, <span class="str">'completed'</span>, <span class="str">'failed'</span>);
+
+<span class="cm">-- Step 3: Upsert into production</span>
+<span class="kw">INSERT INTO</span> <span class="tbl">orders</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">staging_orders</span>
+<span class="kw">WHERE</span> amount > <span class="num">0</span> <span class="kw">AND</span> user_id <span class="kw">IS NOT NULL</span>
+<span class="kw">ON CONFLICT</span> (id) <span class="kw">DO UPDATE SET</span>
+  status     = <span class="kw">EXCLUDED</span>.status,
+  amount     = <span class="kw">EXCLUDED</span>.amount,
+  updated_at = <span class="fn">NOW</span>();
+
+<span class="cm">-- Step 4: Drop staging</span>
+<span class="kw">DROP TABLE</span> <span class="tbl">staging_orders</span>;</pre></div>
+
+  <h2>Table Partitioning Queries</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Range partitioning by date</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Create partitioned table</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">events</span> (
+  id          BIGINT <span class="kw">NOT NULL</span>,
+  user_id     BIGINT,
+  event_type  TEXT,
+  payload     JSONB,
+  occurred_at TIMESTAMPTZ <span class="kw">NOT NULL</span>
+) <span class="kw">PARTITION BY RANGE</span> (occurred_at);
+
+<span class="cm">-- Create monthly partitions</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">events_2024_01</span> <span class="kw">PARTITION OF</span> <span class="tbl">events</span>
+  <span class="kw">FOR VALUES FROM</span> (<span class="str">'2024-01-01'</span>) <span class="kw">TO</span> (<span class="str">'2024-02-01'</span>);
+
+<span class="kw">CREATE TABLE</span> <span class="tbl">events_2024_02</span> <span class="kw">PARTITION OF</span> <span class="tbl">events</span>
+  <span class="kw">FOR VALUES FROM</span> (<span class="str">'2024-02-01'</span>) <span class="kw">TO</span> (<span class="str">'2024-03-01'</span>);
+
+<span class="cm">-- Query uses partition pruning (only scans Jan partition)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">events</span>
+<span class="kw">WHERE</span> occurred_at <span class="kw">BETWEEN</span> <span class="str">'2024-01-01'</span> <span class="kw">AND</span> <span class="str">'2024-01-31'</span>;
+
+<span class="cm">-- Detach old partition (instant, no data copy)</span>
+<span class="kw">ALTER TABLE</span> <span class="tbl">events</span> DETACH PARTITION <span class="tbl">events_2024_01</span> CONCURRENTLY;
+
+<span class="cm">-- Attach new partition</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">events_2025_01</span> (...);
+<span class="kw">ALTER TABLE</span> <span class="tbl">events</span> ATTACH PARTITION <span class="tbl">events_2025_01</span>
+  <span class="kw">FOR VALUES FROM</span> (<span class="str">'2025-01-01'</span>) <span class="kw">TO</span> (<span class="str">'2025-02-01'</span>);</pre></div>
+
+  <h2>Parallel Query Patterns</h2>
+  <div class="code-wrap"><div class="code-header"><span class="code-label-top">Force/hint parallel execution</span><div class="code-dots"><div class="code-dot dot-r"></div><div class="code-dot dot-y"></div><div class="code-dot dot-g"></div></div></div>
+<pre><span class="cm">-- Check if query uses parallel workers</span>
+<span class="kw">EXPLAIN</span> (ANALYZE, VERBOSE)
+<span class="kw">SELECT</span> region, <span class="fn">COUNT</span>(*), <span class="fn">SUM</span>(amount)
+<span class="kw">FROM</span>  <span class="tbl">orders</span>
+<span class="kw">GROUP BY</span> region;
+<span class="cm">-- Look for "Workers Planned" and "Workers Launched"</span>
+
+<span class="cm">-- Force parallel for a heavy session query</span>
+<span class="kw">SET</span> max_parallel_workers_per_gather = <span class="num">8</span>;
+<span class="kw">SET</span> parallel_tuple_cost = <span class="num">0.01</span>;   <span class="cm">-- make parallel more attractive</span>
+<span class="kw">SET</span> parallel_setup_cost = <span class="num">100</span>;
+
+<span class="cm">-- Disable parallel (debugging: isolate parallel overhead)</span>
+<span class="kw">SET</span> max_parallel_workers_per_gather = <span class="num">0</span>;
+
+<span class="cm">-- Parallel-safe function requirement:</span>
+<span class="kw">CREATE FUNCTION</span> my_fn() RETURNS INT
+LANGUAGE sql PARALLEL SAFE  <span class="cm">-- mark as safe to run in parallel worker</span>
+<span class="kw">AS</span> $$ <span class="kw">SELECT</span> <span class="num">1</span> $$;</pre></div>
+
+  <div class="note note-tip"><strong>AlloyDB tip:</strong> Combine partitioning with the columnar engine. AlloyDB's columnar engine works per-partition — partition your largest tables by date, then let it auto-populate columnar data for the hot partitions. This gives you sub-second aggregations on billions of rows.</div>
+</section>
+
+</main>
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.s-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  document.querySelector('.main').scrollTo?.({top:0,behavior:'smooth'});
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
